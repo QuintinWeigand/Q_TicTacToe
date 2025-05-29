@@ -62,3 +62,14 @@ class Board:
                 isValidIndex = True
 
         return isValidIndex
+    
+    @staticmethod
+    def convertNumPositionToIndex(numPos: int):
+        
+        if 1 <= numPos <= 9:
+            row = (numPos - 1) // 3
+            col = (numPos - 1) % 3
+            return row, col
+        else:
+            raise ValueError("Position must be between 1 and 9")
+
