@@ -8,7 +8,7 @@ def main():
     moveCount = 1
 
 
-    while(not board.hasWinner()):
+    while(not board.hasWinnerOrDraw()):
         board.displayBoard()
         if moveCount % 2 == 1:
             playerMoveSquare = input("Player 1: Please enter a square to place your 'X' -> : ")
@@ -40,6 +40,13 @@ def main():
             raise RuntimeError("Panic: Something has gone terribly wrong!!!")
         
         moveCount += 1
+    
+    board.displayBoard()
+
+    if board.getGameStatus['winner'] == "Player1":
+        player1.setPlayerWinner
+    elif board.getGameStatus['winner'] == 'Player2':
+        player2.setPlayerWinner
 
     
 

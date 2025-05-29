@@ -1,6 +1,7 @@
 class Board:
     def __init__(self):
         self.__gameboard = [['1','2','3'],['4','5','6'],['7','8','9']]
+        self.__gamestatus = {}
 
     def displayBoard(self):
         # print("In displayBoard()")
@@ -18,6 +19,9 @@ class Board:
         
         return returnCharacter
     
+    def getGameStatus(self) -> dict:
+        return self.__gamestatus.copy()
+    
     def set(self, row, col, c: chr) -> bool:
         hasBeenSet = False
         if self.__validIndex(row, col):
@@ -31,28 +35,50 @@ class Board:
 
         return hasBeenSet
 
-    def hasWinner(self) -> bool:
+    def hasWinnerOrDraw(self) -> bool:
+        winner = None
+
         # Check rows
         for row in self.__gameboard:
-            if len(set(row)) == 1:
-                return True
+            if len(set(row)) == 1 and not row[0].isdigit():
+                winner = row[0]
+                break
 
         # Check columns
-        for col in range(len(self.__gameboard[0])):
-            column = [self.__gameboard[row][col] for row in range(len(self.__gameboard))]
-            if len(set(column)) == 1:
-                return True
+        if not winner:
+            for col in range(len(self.__gameboard[0])):
+                column = [self.__gameboard[row][col] for row in range(len(self.__gameboard))]
+                if len(set(column)) == 1 and not column[0].isdigit():
+                    winner = column[0]
+                    break
 
         # Check diagonals
-        diag1 = [self.__gameboard[i][i] for i in range(len(self.__gameboard))]
-        if len(set(diag1)) == 1:
+        if not winner:
+            diag1 = [self.__gameboard[i][i] for i in range(len(self.__gameboard))]
+            if len(set(diag1)) == 1 and not diag1[0].isdigit():
+                winner = diag1[0]
+
+        if not winner:
+            diag2 = [self.__gameboard[i][len(self.__gameboard)-1-i] for i in range(len(self.__gameboard))]
+            if len(set(diag2)) == 1 and not diag2[0].isdigit():
+                winner = diag2[0]
+
+        if winner:
+            if winner == 'X':
+                self.__gamestatus["winner"] = "Player1"
+            elif winner == 'O':
+                self.__gamestatus["winner"] = "Player2"
             return True
 
-        diag2 = [self.__gameboard[i][len(self.__gameboard)-1-i] for i in range(len(self.__gameboard))]
-        if len(set(diag2)) == 1:
-            return True
+        # Check for draw: if no digits left, it's a draw
+        for row in self.__gameboard:
+            for cell in row:
+                if cell.isdigit():
+                    return False  # Still moves left
 
-        return False
+        # No winner and no moves left: draw
+        self.__gamestatus["winner"] = "Draw"
+        return True
 
     def __validIndex(self, row, col) -> bool:
         # print("In validIndex!")
