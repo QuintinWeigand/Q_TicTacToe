@@ -68,7 +68,7 @@ def main():
         "Epoch": int(time.time())
     }
 
-    print(finalDict)
+    # print(finalDict)
 
     result = collection.insert_one(finalDict)
 
