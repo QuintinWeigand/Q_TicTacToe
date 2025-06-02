@@ -2,6 +2,7 @@ from Board import Board
 from Players import Player
 import time
 from pymongo import MongoClient
+from itertools import permutations
 
 def main():
     # Mongo connection stuff
@@ -75,4 +76,27 @@ def main():
     print(f"Inserted document with _id: {result.inserted_id}")
 
 if __name__ == "__main__":
-    main()
+    # main()
+    possibilies = [1,2,3,4,5,6,7,8,9]
+    perms = permutations(possibilies)
+    
+    count = 0
+    for i in perms:
+        player1_moves = []
+        player2_moves = []
+        move_num = 0
+        for j in i:
+            move_num += 1
+            if move_num % 2 == 1:
+                # Odd number, Player 1 moves
+                player1_moves.append(j)
+            else:
+                # Even number, Player 2 moves
+                player2_moves.append(j)
+    
+        print("Player 1: ", player1_moves)
+        print("Player 2: ", player2_moves)
+
+
+
+
