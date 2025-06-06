@@ -5,7 +5,8 @@ def count_player2_moves(collection):
     # Specific Query to find games that player 2 won or drew
     query = {
         "Player1.isWinner": False,
-        "Player1.moves.0": {"$in": [1, 3, 5, 9]}
+        # "Player1.moves.0": {"$in": [1, 3, 5, 9]}
+        "Player1.moves.0": {"$in": [1]}
     }
     move_counter = {}
     for record in collection.find(query):
@@ -53,7 +54,7 @@ def main():
 
     plt.bar_label(bars, padding=3)
     
-    plt.savefig("plots/player2_best_move.png")
+    plt.savefig("plots/TESTINGplayer2_best_move.png")
     
 
 
