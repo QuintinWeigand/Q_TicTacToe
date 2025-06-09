@@ -17,3 +17,7 @@ class QBoard:
             self.__q_board[board_position - 1].add_particle(particle)
         else: 
             raise ValueError("Incorrect board position")
+        
+    # TODO: Stub method for now, find cycles in the board (recursion?)
+    def detect_cycle(self):
+        pass
