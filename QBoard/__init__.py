@@ -1,0 +1,19 @@
+from QBoardSquare import QBoardSquare
+from QParticle import QParticle
+
+class QBoard:
+    def __init__(self):
+        self.__q_board = [QBoardSquare(i + 1) for i in range(9)]
+
+    def display_board(self):
+        for i in range(len(self.__q_board)):
+            particles = self.__q_board[i].get_particle_list_copy()
+            particle_str = ' '.join(str(p) for p in particles) if particles else '-'
+            print(f"{i + 1} | {particle_str}")
+
+    def add_player_move(self, board_position: int, move_number: int, creation_number: int):
+        if board_position >= 1 and board_position <= 9:
+            particle = QParticle(move_number, creation_number)
+            self.__q_board[board_position - 1].add_particle(particle)
+        else: 
+            raise ValueError("Incorrect board position")
