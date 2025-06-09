@@ -1,6 +1,8 @@
 from QBoardSquare import QBoardSquare
 from QParticle import QParticle
 
+# TODO: QBoard will handle the detecting cycles using recursion going through each square finding same subscript particles
+
 class QBoard:
     def __init__(self):
         self.__q_board = [QBoardSquare(i + 1) for i in range(9)]
