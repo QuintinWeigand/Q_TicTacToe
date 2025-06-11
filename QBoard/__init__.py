@@ -22,12 +22,9 @@ class QBoard:
         else: 
             raise ValueError("Incorrect board position")
         
-    # TODO: Stub method for now, find cycles in the board (recursion?)
+    # Detect if there are any cycles in the quantum board.
+    # Returns: (bool, list) - (whether cycle exists, list of (position, subscript) in cycle)
     def detect_cycle(self) -> tuple[bool, list]:
-        """
-        Detect if there are any cycles in the quantum board.
-        Returns: (bool, list) - (whether cycle exists, list of (position, subscript) in cycle)
-        """
         # Build adjacency list for each square
         adjacency = {}
         particle_info = {}  # Store creation numbers for each node
@@ -96,8 +93,8 @@ class QBoard:
         
         return False, []
 
+    # Print all relationships between particles with the same subscript.
     def print_relationships(self):
-        """Print all relationships between particles with the same subscript."""
         # Keep track of relationships we've already seen
         seen_relationships = set()
 
@@ -127,7 +124,7 @@ class QBoard:
                             find_related_particles(other_particle, square, visited_squares)
 
         # Search through each square and particle
-        visited_pairs = set()  # To avoid processing the same starting point twice
+        visited_pairs = set()  # using a set only allows for unique values
         for square_num, square in enumerate(self.__q_board, 1):
             for particle in square.get_particle_list_copy():
                 pair_key = (square_num, particle.get_subscript())
