@@ -9,8 +9,8 @@ class QBoard:
         for i in range(len(self.__q_board)):
             square = self.__q_board[i]
             particles = square.get_particle_list_copy()
-            # Show only subscripts in the display
-            display_str = ' '.join(str(p.get_subscript()) for p in particles) if particles else '-'
+            # Show subscripts and creation numbers
+            display_str = ' '.join(f"{p.get_subscript()}[{p.get_creation_number()}]" for p in particles) if particles else '-'
             print(f"{i + 1} | {display_str}")
 
     def add_player_move(self, board_position: int, move_number: int, creation_number: int):
@@ -129,3 +129,14 @@ class QBoard:
                                         break
                             if shared_square:
                                 add_relationship(pos1, particle1, pos2, particle2)
+
+    def clear_position(self, position: int):
+        """Clear all particles from a position after collapse."""
+        if 1 <= position <= 9:
+            self.__q_board[position - 1].clear_particles()
+
+    def get_square(self, position: int) -> QBoardSquare:
+        """Get the QBoardSquare at the given position (1-9)"""
+        if 1 <= position <= 9:
+            return self.__q_board[position - 1]
+        raise ValueError("Position must be between 1 and 9")
