@@ -28,66 +28,61 @@ class QBoard:
         
         print("\nDEBUG: Running cycle detection...")
         
-        # Build adjacency list for each square and its subscripts
-        square_subscripts = {}  # Maps square -> set of subscripts in that square
-        adjacency = {}  # Maps (pos, subscript) -> set of connected (pos, subscript)
-        particle_info = {}  # Maps (pos, subscript) -> creation number
-        
-        # Maps subscript -> list of (pos, creation) for particles with this subscript
-        subscript_locations = {}
-        
-        # First, collect all subscripts in each square and map by subscript
+        # Build adjacency list of entangled pairs: (pos, sub, cr) <-> (other_pos, sub, other_cr)
+        from collections import defaultdict, deque
+        particles = []
+        sub_to_particles = defaultdict(list)  # sub -> list of (pos, cr)
         for pos, square in enumerate(self.__q_board, 1):
-            particles = square.get_particle_list_copy()
-            if particles:
-                square_subscripts[pos] = {}
-                for p in particles:
-                    sub = p.get_subscript()
-                    cr = p.get_creation_number()
-                    square_subscripts[pos][sub] = cr
-                    
-                    # Group by subscript for faster cycle detection between same subscript
-                    if sub not in subscript_locations:
-                        subscript_locations[sub] = []
-                    subscript_locations[sub].append((pos, cr))
-                    
-                    # Setup adjacency entries
-                    key = (pos, sub)
-                    if key not in adjacency:
-                        adjacency[key] = set()
-                        particle_info[key] = cr
-        
-        # Build connections between different subscripts that share squares
-        for pos, sub_dict in square_subscripts.items():
-            # For each subscript in this square
-            for sub1 in sub_dict:
-                key1 = (pos, sub1)
-                # Connect to other subscripts in the same square
-                for sub2 in sub_dict:
-                    if sub1 != sub2:  # Don't connect to self
-                        # Find other squares that have sub2
-                        for other_pos, other_sub_dict in square_subscripts.items():
-                            if other_pos != pos and sub2 in other_sub_dict:
-                                key2 = (other_pos, sub2)
-                                adjacency[key1].add(key2)
-        
-        # First, look for shortest cycle between particles with same subscript
-        # which would be the most direct representation of a quantum superposition
-        for sub, locations in subscript_locations.items():
-            if len(locations) > 1:  # Need at least 2 particles with same subscript
-                # Check for a cycle involving this subscript
-                shortest_cycle = self._find_shortest_cycle_for_subscript(sub, adjacency, particle_info)
-                if shortest_cycle:
-                    return True, shortest_cycle
-        
-        # If no direct cycles between same subscript, look for any cycle
-        visited = set()
-        for node in adjacency:
-            if node not in visited:
-                cycle = self._find_any_cycle(node, adjacency, particle_info, visited)
-                if cycle:
-                    return True, cycle
-        
+            for p in square.get_particle_list_copy():
+                sub = p.get_subscript()
+                cr = p.get_creation_number()
+                particles.append((pos, sub, cr))
+                sub_to_particles[sub].append((pos, cr))
+
+        adjacency = defaultdict(set)  # (pos, sub, cr) -> set of (pos, sub, cr)
+        # Connect entangled pairs
+        for sub, plist in sub_to_particles.items():
+            if len(plist) == 2:
+                (pos1, cr1), (pos2, cr2) = plist
+                adjacency[(pos1, sub, cr1)].add((pos2, sub, cr2))
+                adjacency[(pos2, sub, cr2)].add((pos1, sub, cr1))
+        # Connect all particles that share the same square
+        pos_to_particles = defaultdict(list)
+        for pos, sub, cr in particles:
+            pos_to_particles[pos].append((pos, sub, cr))
+        for plist in pos_to_particles.values():
+            for i in range(len(plist)):
+                for j in range(i + 1, len(plist)):
+                    a, b = plist[i], plist[j]
+                    adjacency[a].add(b)
+                    adjacency[b].add(a)
+
+        # Find any cycle in the entanglement graph using BFS
+        def find_cycle():
+            for start in particles:
+                queue = deque([(start, [start])])
+                while queue:
+                    node, path = queue.popleft()
+                    for neighbor in adjacency[node]:
+                        if neighbor in path and neighbor != path[-2]:
+                            # Found a cycle (not just returning to immediate predecessor)
+                            cycle_start = path.index(neighbor)
+                            cycle = path[cycle_start:] + [neighbor]
+                            print(f"[DEBUG] Detected cycle: {cycle}")
+                            return cycle
+                        if neighbor not in path:
+                            queue.append((neighbor, path + [neighbor]))
+            return None
+
+        print("[DEBUG] Entanglement adjacency list:")
+        for k, v in adjacency.items():
+            print(f"  {k}: {list(v)}")
+        print(f"[DEBUG] All particles: {particles}")
+        cycle = find_cycle()
+        if cycle:
+            print(f"[DEBUG] Detected cycle: {cycle}")
+            return True, cycle
+        print("[DEBUG] No cycle detected.")
         return False, []
         
     def _find_shortest_cycle_for_subscript(self, subscript, adjacency, particle_info):
@@ -117,22 +112,29 @@ class QBoard:
             
         while queue:
             node, path = queue.pop(0)
-                
+
             # Check each neighbor
             for neighbor in adjacency.get(node, []):
                 if neighbor not in visited:
                     visited.add(neighbor)
-                        
+
                     # Create new path with this neighbor
                     new_path = path + [(neighbor[0], neighbor[1], particle_info[neighbor])]
-                        
+
                     # If we reached the target node (same subscript, different position)
                     if neighbor == target:
-                        print(f"DEBUG: Found cycle! Path length: {len(new_path)}")
-                        return new_path  # Return this path as our cycle
-                            
+                        # Remove duplicate nodes from the path
+                        seen = set()
+                        filtered_path = []
+                        for p in new_path:
+                            if (p[0], p[1], p[2]) not in seen:
+                                filtered_path.append(p)
+                                seen.add((p[0], p[1], p[2]))
+                        print(f"DEBUG: Found cycle! Path length: {len(filtered_path)}")
+                        return filtered_path  # Return this path as our cycle
+
                     queue.append((neighbor, new_path))
-        
+
         return None  # No cycle found between same subscript particles
         
     def _find_any_cycle(self, start, adjacency, particle_info, global_visited=None):

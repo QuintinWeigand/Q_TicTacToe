@@ -149,153 +149,93 @@ class QuantumGame:
                         print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
 
     def resolve_collapse(self, cycle_info, chosen_pos, chosen_subscript, chosen_creation):
-        
-        # Handles all entanglements and ensures proper propagation through the cycle!
-        
+        """
+        Implements recursive/iterative quantum collapse propagation:
+        - When a particle is observed, its pair is eliminated.
+        - If a square is left with only one particle, that particle must be observed.
+        - Repeat until no more changes occur.
+        """
         print("\nEMERGENCY QUANTUM COLLAPSE RESOLUTION...")
         print(f"Observing particle {chosen_subscript}[{chosen_creation}] at position {chosen_pos}")
-        
-        # Initialize quantum state
-        exists = {}      # pos -> (subscript, player)
-        nonexist = set() # positions that don't exist
-        
-        # Map particles to their positions and pair info
-        particle_pairs = {}  # (sub, cr) -> (other_pos, other_cr)
-        for pos, sub, cr in cycle_info:
-            # Find its pair in the same move
-            for other_pos, other_sub, other_cr in cycle_info:
-                if pos != other_pos and sub == other_sub:
-                    particle_pairs[(sub, cr)] = (other_pos, other_cr)
-        
+
+        # Remove duplicates from cycle_info
+        unique_cycle_info = list({(pos, sub, cr) for (pos, sub, cr) in cycle_info})
+        # Build a map of all entangled pairs: (sub, cr) -> (other_pos, other_cr), only for subscripts with exactly two positions
+        from collections import defaultdict
+        sub_to_particles = defaultdict(list)  # sub -> list of (pos, cr)
+        for pos, sub, cr in unique_cycle_info:
+            sub_to_particles[sub].append((pos, cr))
+        particle_pairs = {}
+        for sub, particles in sub_to_particles.items():
+            if len(particles) == 2:
+                (pos1, cr1), (pos2, cr2) = particles
+                particle_pairs[(sub, cr1)] = (pos2, cr2)
+                particle_pairs[(sub, cr2)] = (pos1, cr1)
+
+        # Track which positions have been materialized (observed) and which are eliminated
+        observed = {}  # pos -> (sub, player)
+        eliminated_particles = set()  # (pos, sub, cr)
+
         # Start with the chosen particle
-        exists[chosen_pos] = (chosen_subscript, 1 if chosen_subscript % 2 == 1 else 2)
+        player = 1 if chosen_subscript % 2 == 1 else 2
+        observed[chosen_pos] = (chosen_subscript, player)
+        if (chosen_subscript, chosen_creation) not in particle_pairs:
+            print(f"[DEBUG] Key ({chosen_subscript}, {chosen_creation}) not found in particle_pairs!")
+            print(f"[DEBUG] particle_pairs: {particle_pairs}")
+            print(f"[DEBUG] cycle_info: {cycle_info}")
+            raise KeyError((chosen_subscript, chosen_creation))
+        eliminated_particles.add((particle_pairs[(chosen_subscript, chosen_creation)][0], chosen_subscript, particle_pairs[(chosen_subscript, chosen_creation)][1]))
         print(f"\nCollapse chain reaction:")
-        print(f"→ Position {chosen_pos} exists for Player {1 if chosen_subscript % 2 == 1 else 2} (Move {chosen_subscript}[{chosen_creation}])")
-        
-        # Find and eliminate its pair
-        if (chosen_subscript, chosen_creation) in particle_pairs:
-            pair_pos, pair_cr = particle_pairs[(chosen_subscript, chosen_creation)]
-            nonexist.add(pair_pos)
-            print(f"→ Position {pair_pos} cannot contain {chosen_subscript}[{pair_cr}] (paired with chosen particle)")
-        
-        # Process implications until nothing changes (with safety limit)
-        max_iterations = 10  # Safety limit to prevent infinite loops
-        iteration = 0
+        print(f"→ Position {chosen_pos} exists for Player {player} (Move {chosen_subscript}[{chosen_creation}])")
+        print(f"→ Eliminating pair at position {particle_pairs[(chosen_subscript, chosen_creation)][0]} (Move {chosen_subscript}[{particle_pairs[(chosen_subscript, chosen_creation)][1]}])")
+
         changed = True
-        
-        # Track positions that had no particles to begin with
-        empty_positions = set()
-        for pos in range(1, 10):
-            if pos not in exists and pos not in nonexist:
-                square = self.quantum_board.get_square(pos)
-                if not square.get_particle_list_copy():
-                    empty_positions.add(pos)
-                    nonexist.add(pos)
-        
-        while changed and iteration < max_iterations:
-            iteration += 1
+        while changed:
             changed = False
-            
-            # Check each position
-            for pos in range(1, 10):
-                if pos not in exists and pos not in nonexist:
-                    square = self.quantum_board.get_square(pos)
-                    valid_particles = []
-                    
-                    # Check each particle
-                    for particle in square.get_particle_list_copy():
-                        sub = particle.get_subscript()
-                        cr = particle.get_creation_number()
-                        
-                        # A particle is valid if:
-                        # 1. It hasn't been materialized elsewhere
-                        # 2. Its pair isn't marked as nonexistent
-                        if (sub, cr) in particle_pairs:
-                            pair_pos, pair_cr = particle_pairs[(sub, cr)]
-                            if pair_pos not in nonexist and not any(p == sub for p, _ in exists.values()):
-                                valid_particles.append((sub, cr))
-                    
-                    # If exactly one valid particle remains, it must materialize
-                    if len(valid_particles) == 1:
-                        sub, cr = valid_particles[0]
-                        player = 1 if sub % 2 == 1 else 2
-                        exists[pos] = (sub, player)
-                        print(f"→ Position {pos} must exist for Player {player} (Move {sub}[{cr}] - only valid particle)")
-                        
-                        # Its pair must be eliminated
-                        if (sub, cr) in particle_pairs:
-                            pair_pos, pair_cr = particle_pairs[(sub, cr)]
-                            if pair_pos not in nonexist:
-                                nonexist.add(pair_pos)
-                                print(f"→ Position {pair_pos} cannot exist (contains pair {sub}[{pair_cr}])")
-                        changed = True
-                    
-                    # If no valid particles remain, position is nonexistent
-                    elif len(valid_particles) == 0:
-                        nonexist.add(pos)
-                        print(f"→ Position {pos} cannot exist (no valid particles)")
-                        changed = True
-            
-        if iteration == max_iterations:
-            print("Warning: Reached maximum iterations in collapse processing. Some implications may not be fully resolved.")
-        
+            # For each position in the cycle, check if only one particle remains (not eliminated)
+            for pos in set(pos for pos, _, _ in cycle_info):
+                if pos in observed:
+                    continue
+                # Get all particles in this position
+                square_particles = [(sub, cr) for p, sub, cr in cycle_info if p == pos and (p, sub, cr) not in eliminated_particles]
+                if len(square_particles) == 1:
+                    # Only one particle remains, so it must be observed
+                    sub, cr = square_particles[0]
+                    player = 1 if sub % 2 == 1 else 2
+                    observed[pos] = (sub, player)
+                    # Eliminate its pair
+                    if (sub, cr) in particle_pairs:
+                        pair_pos, pair_cr = particle_pairs[(sub, cr)]
+                        eliminated_particles.add((pair_pos, sub, pair_cr))
+                        print(f"→ Position {pos} must exist for Player {player} (Move {sub}[{cr}])")
+                        print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
+                    changed = True
+                elif len(square_particles) == 0:
+                    # No particles left, nothing to do
+                    continue
+
         print("\nApplying quantum collapse...")
-        # First, mark all positions that exist with the correct player's mark
-        for pos in sorted(exists.keys()):
-            sub, player = exists[pos]
+        for pos, (sub, player) in observed.items():
             row, col = Board.convertNumPositionToIndex(pos)
             mark = 'X' if player == 1 else 'O'
             if self.classical_board.set(row, col, mark):
                 print(f"→ Position {pos} collapsed to Player {player}'s {mark}")
-        
-        # For each existing particle, find and mark its quantum pair
-        # Map of positions that need special marking
-        positions_to_mark = {}  # pos -> (player, mark, reason)
-        
-        # First, find all direct pairs of existing particles
-        for pos, (sub, player) in exists.items():
-            # Find the other position with the same subscript
-            for other_pos in range(1, 10):
-                if other_pos != pos and other_pos not in exists:
-                    square = self.quantum_board.get_square(other_pos)
-                    particles = square.get_particle_list_copy()
-                    for particle in particles:
-                        if particle.get_subscript() == sub:
-                            # Found the pair
-                            opposite_player = 3 - player  # Switch between 1 and 2
-                            mark = 'X' if opposite_player == 1 else 'O'
-                            positions_to_mark[other_pos] = (opposite_player, mark, f"pair with position {pos}")
-        
-        # Special case for our test scenario: if positions 1 and 2 are marked but not 3
-        if 1 in exists and 2 in positions_to_mark and 3 not in exists and 3 not in positions_to_mark:
-            for particle in self.quantum_board.get_square(3).get_particle_list_copy():
-                if particle.get_subscript() == 3:  # If it has player 1's subscript 3
-                    positions_to_mark[3] = (1, 'X', "part of cycle")
-                    break
-        
-        # Now apply the marks to the classical board
-        for pos, (player, mark, reason) in positions_to_mark.items():
-            row, col = Board.convertNumPositionToIndex(pos)
-            if self.classical_board.set(row, col, mark):
-                print(f"→ Position {pos} collapsed to Player {player}'s {mark} ({reason})")
-        
+
         # Clear quantum state and update relationships
-        cleared_positions = exists.keys() | nonexist
+        cleared_positions = set(observed.keys()) | set(p for p, _, _ in eliminated_particles)
         for pos in cleared_positions:
             self.quantum_board.clear_position(pos)
-            # Clean up relationships
             self.pairs.pop(pos, None)
             self.shares_square.pop(pos, None)
-        
-        # Clean up references to cleared positions in remaining relationships
+
         for pos in self.pairs:
             self.pairs[pos] = {(p, s) for p, s in self.pairs[pos] if p not in cleared_positions}
         for pos in self.shares_square:
             self.shares_square[pos] = {(p, s) for p, s in self.shares_square[pos] if p not in cleared_positions}
 
         print("\nQuantum collapse complete!")
-        print("Realized positions:", ", ".join(f"{pos}→P{exists[pos][1]}" for pos in sorted(exists.keys())))
-        print("Non-existent positions:", ", ".join(str(pos) for pos in sorted(nonexist)))
+        print("Realized positions:", ", ".join(f"{pos}→P{observed[pos][1]}" for pos in sorted(observed.keys())))
+        print("Eliminated positions:", ", ".join(str(pos) for pos, _, _ in eliminated_particles))
 
         # Check for win
         if self.classical_board.hasWinnerOrDraw():
@@ -304,7 +244,6 @@ class QuantumGame:
             self.winner = game_status.get("winner")
             print(f"\nGame Over! {self.winner} wins!")
             return True
-        
         return False
 
     def validate_move_position(self, position: int) -> bool:
