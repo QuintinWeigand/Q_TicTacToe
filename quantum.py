@@ -158,11 +158,17 @@ class QuantumGame:
         print("\nEMERGENCY QUANTUM COLLAPSE RESOLUTION...")
         print(f"Observing particle {chosen_subscript}[{chosen_creation}] at position {chosen_pos}")
 
-        # Remove duplicates from cycle_info
-        unique_cycle_info = list({(pos, sub, cr) for (pos, sub, cr) in cycle_info})
+        # Use all particles on the board for propagation, not just those in the cycle
+        all_particles = []
+        for pos in range(1, 10):
+            square = self.quantum_board.get_square(pos)
+            for p in square.get_particle_list_copy():
+                sub = p.get_subscript()
+                cr = p.get_creation_number()
+                all_particles.append((pos, sub, cr))
         from collections import defaultdict, deque
         sub_to_particles = defaultdict(list)  # sub -> list of (pos, cr)
-        for pos, sub, cr in unique_cycle_info:
+        for pos, sub, cr in all_particles:
             sub_to_particles[sub].append((pos, cr))
         particle_pairs = {}
         for sub, particles in sub_to_particles.items():
@@ -195,7 +201,7 @@ class QuantumGame:
                     for check_pos in range(1, 10):
                         if check_pos in observed or check_pos in checked:
                             continue
-                        square_particles = [(s, c) for p, s, c in unique_cycle_info if p == check_pos and (p, s, c) not in eliminated_particles]
+                        square_particles = [(s, c) for p, s, c in all_particles if p == check_pos and (p, s, c) not in eliminated_particles]
                         if len(square_particles) == 1:
                             s2, c2 = square_particles[0]
                             forced.append((check_pos, s2, c2))
@@ -213,7 +219,7 @@ class QuantumGame:
                 if pos in observed:
                     continue
                 # Get all particles in this position
-                square_particles = [(sub, cr) for p, sub, cr in unique_cycle_info if p == pos and (p, sub, cr) not in eliminated_particles]
+                square_particles = [(sub, cr) for p, sub, cr in all_particles if p == pos and (p, sub, cr) not in eliminated_particles]
                 if len(square_particles) == 1:
                     sub, cr = square_particles[0]
                     forced.append((pos, sub, cr))
