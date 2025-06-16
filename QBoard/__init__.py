@@ -40,13 +40,15 @@ class QBoard:
                 sub_to_particles[sub].append((pos, cr))
 
         adjacency = defaultdict(set)  # (pos, sub, cr) -> set of (pos, sub, cr)
-        # Connect entangled pairs
+        # Build two types of adjacency: entangled pairs and same-square
+        entangled_adjacency = defaultdict(set)
         for sub, plist in sub_to_particles.items():
             if len(plist) == 2:
                 (pos1, cr1), (pos2, cr2) = plist
-                adjacency[(pos1, sub, cr1)].add((pos2, sub, cr2))
-                adjacency[(pos2, sub, cr2)].add((pos1, sub, cr1))
-        # Connect all particles that share the same square
+                entangled_adjacency[(pos1, sub, cr1)].add((pos2, sub, cr2))
+                entangled_adjacency[(pos2, sub, cr2)].add((pos1, sub, cr1))
+
+        square_adjacency = defaultdict(set)
         pos_to_particles = defaultdict(list)
         for pos, sub, cr in particles:
             pos_to_particles[pos].append((pos, sub, cr))
@@ -54,8 +56,30 @@ class QBoard:
             for i in range(len(plist)):
                 for j in range(i + 1, len(plist)):
                     a, b = plist[i], plist[j]
-                    adjacency[a].add(b)
-                    adjacency[b].add(a)
+                    square_adjacency[a].add(b)
+                    square_adjacency[b].add(a)
+
+        # Cycle search alternates between entangled and square connections
+        def find_quantum_cycle():
+            for start in particles:
+                stack = [(start, [start], True)]  # (current, path, next_is_entangled)
+                while stack:
+                    node, path, entangled_next = stack.pop()
+                    neighbors = entangled_adjacency[node] if entangled_next else square_adjacency[node]
+                    for neighbor in neighbors:
+                        if neighbor == path[0] and len(path) > 2:
+                            # Found a cycle
+                            print(f"[DEBUG] Detected quantum cycle: {path + [neighbor]}")
+                            return path + [neighbor]
+                        if neighbor not in path:
+                            stack.append((neighbor, path + [neighbor], not entangled_next))
+            return None
+
+        cycle = find_quantum_cycle()
+        if cycle:
+            return True, cycle
+        print("[DEBUG] No quantum cycle detected.")
+        return False, []
 
         # Find any cycle in the entanglement graph using BFS
         def find_cycle():

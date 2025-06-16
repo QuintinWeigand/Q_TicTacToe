@@ -160,8 +160,7 @@ class QuantumGame:
 
         # Remove duplicates from cycle_info
         unique_cycle_info = list({(pos, sub, cr) for (pos, sub, cr) in cycle_info})
-        # Build a map of all entangled pairs: (sub, cr) -> (other_pos, other_cr), only for subscripts with exactly two positions
-        from collections import defaultdict
+        from collections import defaultdict, deque
         sub_to_particles = defaultdict(list)  # sub -> list of (pos, cr)
         for pos, sub, cr in unique_cycle_info:
             sub_to_particles[sub].append((pos, cr))
@@ -177,42 +176,59 @@ class QuantumGame:
         eliminated_particles = set()  # (pos, sub, cr)
 
         # Start with the chosen particle
-        player = 1 if chosen_subscript % 2 == 1 else 2
-        observed[chosen_pos] = (chosen_subscript, player)
-        if (chosen_subscript, chosen_creation) not in particle_pairs:
-            print(f"[DEBUG] Key ({chosen_subscript}, {chosen_creation}) not found in particle_pairs!")
-            print(f"[DEBUG] particle_pairs: {particle_pairs}")
-            print(f"[DEBUG] cycle_info: {cycle_info}")
-            raise KeyError((chosen_subscript, chosen_creation))
-        eliminated_particles.add((particle_pairs[(chosen_subscript, chosen_creation)][0], chosen_subscript, particle_pairs[(chosen_subscript, chosen_creation)][1]))
-        print(f"\nCollapse chain reaction:")
-        print(f"→ Position {chosen_pos} exists for Player {player} (Move {chosen_subscript}[{chosen_creation}])")
-        print(f"→ Eliminating pair at position {particle_pairs[(chosen_subscript, chosen_creation)][0]} (Move {chosen_subscript}[{particle_pairs[(chosen_subscript, chosen_creation)][1]}])")
+        to_observe = deque([(chosen_pos, chosen_subscript, chosen_creation)])
+        while to_observe:
+            pos, sub, cr = to_observe.popleft()
+            if pos in observed:
+                continue
+            observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
+            print(f"→ Position {pos} exists for Player {observed[pos][1]} (Move {sub}[{cr}])")
+            # Eliminate its entangled pair
+            if (sub, cr) in particle_pairs:
+                pair_pos, pair_cr = particle_pairs[(sub, cr)]
+                eliminated_particles.add((pair_pos, sub, pair_cr))
+                print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
+                # After elimination, check if pair_pos now has only one particle left
+                checked = set()
+                while True:
+                    forced = []
+                    for check_pos in range(1, 10):
+                        if check_pos in observed or check_pos in checked:
+                            continue
+                        square_particles = [(s, c) for p, s, c in unique_cycle_info if p == check_pos and (p, s, c) not in eliminated_particles]
+                        if len(square_particles) == 1:
+                            s2, c2 = square_particles[0]
+                            forced.append((check_pos, s2, c2))
+                    if not forced:
+                        break
+                    for fpos, fsub, fcr in forced:
+                        if fpos not in observed:
+                            to_observe.append((fpos, fsub, fcr))
+                            checked.add(fpos)
 
-        changed = True
-        while changed:
-            changed = False
-            # For each position in the cycle, check if only one particle remains (not eliminated)
-            for pos in set(pos for pos, _, _ in cycle_info):
+        # Propagate implications to all positions (not just those in the cycle)
+        while True:
+            forced = []
+            for pos in range(1, 10):
                 if pos in observed:
                     continue
                 # Get all particles in this position
-                square_particles = [(sub, cr) for p, sub, cr in cycle_info if p == pos and (p, sub, cr) not in eliminated_particles]
+                square_particles = [(sub, cr) for p, sub, cr in unique_cycle_info if p == pos and (p, sub, cr) not in eliminated_particles]
                 if len(square_particles) == 1:
-                    # Only one particle remains, so it must be observed
                     sub, cr = square_particles[0]
-                    player = 1 if sub % 2 == 1 else 2
-                    observed[pos] = (sub, player)
-                    # Eliminate its pair
-                    if (sub, cr) in particle_pairs:
-                        pair_pos, pair_cr = particle_pairs[(sub, cr)]
-                        eliminated_particles.add((pair_pos, sub, pair_cr))
-                        print(f"→ Position {pos} must exist for Player {player} (Move {sub}[{cr}])")
-                        print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
-                    changed = True
-                elif len(square_particles) == 0:
-                    # No particles left, nothing to do
+                    forced.append((pos, sub, cr))
+            if not forced:
+                break
+            for pos, sub, cr in forced:
+                if pos in observed:
                     continue
+                observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
+                print(f"→ Position {pos} must exist for Player {observed[pos][1]} (Move {sub}[{cr}])")
+                # Eliminate its pair
+                if (sub, cr) in particle_pairs:
+                    pair_pos, pair_cr = particle_pairs[(sub, cr)]
+                    eliminated_particles.add((pair_pos, sub, pair_cr))
+                    print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
 
         print("\nApplying quantum collapse...")
         for pos, (sub, player) in observed.items():
