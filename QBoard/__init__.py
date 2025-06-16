@@ -23,77 +23,153 @@ class QBoard:
     def detect_cycle(self) -> tuple[bool, list]:
         
         # Detect cycles between particles from different moves that share squares.
+        # Specifically focusing on the shortest path between particles with the same subscript.
         # Returns (bool, list): whether cycle exists, list of (position, subscript, creation) in cycle
+        
+        print("\nDEBUG: Running cycle detection...")
         
         # Build adjacency list for each square and its subscripts
         square_subscripts = {}  # Maps square -> set of subscripts in that square
         adjacency = {}  # Maps (pos, subscript) -> set of connected (pos, subscript)
         particle_info = {}  # Maps (pos, subscript) -> creation number
         
-        # First, collect all subscripts in each square
+        # Maps subscript -> list of (pos, creation) for particles with this subscript
+        subscript_locations = {}
+        
+        # First, collect all subscripts in each square and map by subscript
         for pos, square in enumerate(self.__q_board, 1):
             particles = square.get_particle_list_copy()
             if particles:
-                square_subscripts[pos] = {p.get_subscript() for p in particles}
-                # Also initialize adjacency entries
+                square_subscripts[pos] = {}
                 for p in particles:
-                    key = (pos, p.get_subscript())
+                    sub = p.get_subscript()
+                    cr = p.get_creation_number()
+                    square_subscripts[pos][sub] = cr
+                    
+                    # Group by subscript for faster cycle detection between same subscript
+                    if sub not in subscript_locations:
+                        subscript_locations[sub] = []
+                    subscript_locations[sub].append((pos, cr))
+                    
+                    # Setup adjacency entries
+                    key = (pos, sub)
                     if key not in adjacency:
                         adjacency[key] = set()
-                        particle_info[key] = p.get_creation_number()
+                        particle_info[key] = cr
         
         # Build connections between different subscripts that share squares
-        for pos, subscripts in square_subscripts.items():
+        for pos, sub_dict in square_subscripts.items():
             # For each subscript in this square
-            for sub1 in subscripts:
+            for sub1 in sub_dict:
                 key1 = (pos, sub1)
                 # Connect to other subscripts in the same square
-                for sub2 in subscripts:
+                for sub2 in sub_dict:
                     if sub1 != sub2:  # Don't connect to self
                         # Find other squares that have sub2
-                        for other_pos, other_subs in square_subscripts.items():
-                            if other_pos != pos and sub2 in other_subs:
+                        for other_pos, other_sub_dict in square_subscripts.items():
+                            if other_pos != pos and sub2 in other_sub_dict:
                                 key2 = (other_pos, sub2)
                                 adjacency[key1].add(key2)
         
-        # Function to check for cycles using DFS
-        def find_cycle(node, visited, rec_stack, path):
-            visited.add(node)
-            rec_stack.add(node)
-            path.append(node)
-            
-            for neighbor in adjacency.get(node, []):
-                if neighbor in rec_stack:
-                    # Found a cycle! Build complete cycle starting from this node
-                    cycle = []
-                    current = neighbor
-                    while True:
-                        cycle.append((current[0], current[1], particle_info[current]))
-                        next_nodes = [n for n in adjacency[current] if n not in {node for node, _, _ in cycle}]
-                        if not next_nodes or (len(cycle) > 0 and next_nodes[0] == neighbor):
-                            break
-                        current = next_nodes[0]
-                    return cycle
-                elif neighbor not in visited:
-                    result = find_cycle(neighbor, visited, rec_stack, path)
-                    if result:
-                        return result
-            
-            path.pop()
-            rec_stack.remove(node)
-            return None
+        # First, look for shortest cycle between particles with same subscript
+        # which would be the most direct representation of a quantum superposition
+        for sub, locations in subscript_locations.items():
+            if len(locations) > 1:  # Need at least 2 particles with same subscript
+                # Check for a cycle involving this subscript
+                shortest_cycle = self._find_shortest_cycle_for_subscript(sub, adjacency, particle_info)
+                if shortest_cycle:
+                    return True, shortest_cycle
         
-        # Check each node for cycles
+        # If no direct cycles between same subscript, look for any cycle
         visited = set()
         for node in adjacency:
             if node not in visited:
-                rec_stack = set()
-                path = []
-                cycle = find_cycle(node, visited, rec_stack, path)
+                cycle = self._find_any_cycle(node, adjacency, particle_info, visited)
                 if cycle:
                     return True, cycle
         
         return False, []
+        
+    def _find_shortest_cycle_for_subscript(self, subscript, adjacency, particle_info):
+        """
+        Find the shortest path that connects two particles with the same subscript.
+        This represents a quantum superposition that needs to collapse.
+        """
+        # For each position with this subscript
+        nodes_with_subscript = [(pos, subscript) for (pos, sub) in adjacency if sub == subscript]
+        
+        print(f"DEBUG: Found {len(nodes_with_subscript)} positions with subscript {subscript}")
+        
+        if len(nodes_with_subscript) < 2:
+            return None
+            
+        # We should always have exactly 2 positions with same subscript in a quantum move
+        pos1, pos2 = nodes_with_subscript[0][0], nodes_with_subscript[1][0]
+        print(f"DEBUG: Looking for cycle between positions {pos1} and {pos2} with subscript {subscript}")
+            
+        # Use BFS to find shortest path between the two positions with same subscript
+        start = nodes_with_subscript[0]
+        target = nodes_with_subscript[1]
+            
+        # BFS from start node to target node
+        visited = {start}
+        queue = [(start, [(start[0], start[1], particle_info[start])])]
+            
+        while queue:
+            node, path = queue.pop(0)
+                
+            # Check each neighbor
+            for neighbor in adjacency.get(node, []):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                        
+                    # Create new path with this neighbor
+                    new_path = path + [(neighbor[0], neighbor[1], particle_info[neighbor])]
+                        
+                    # If we reached the target node (same subscript, different position)
+                    if neighbor == target:
+                        print(f"DEBUG: Found cycle! Path length: {len(new_path)}")
+                        return new_path  # Return this path as our cycle
+                            
+                    queue.append((neighbor, new_path))
+        
+        return None  # No cycle found between same subscript particles
+        
+    def _find_any_cycle(self, start, adjacency, particle_info, global_visited=None):
+        """Find any cycle in the graph using DFS."""
+        if global_visited is None:
+            global_visited = set()
+            
+        print(f"DEBUG: Starting DFS cycle detection from node {start}")
+        rec_stack = set()
+        path = []
+        
+        def dfs(node):
+            global_visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+            
+            for neighbor in adjacency.get(node, []):
+                # If neighbor is in current recursion stack, we found a cycle
+                if neighbor in rec_stack:
+                    # Extract cycle from path
+                    idx = path.index(neighbor)
+                    print(f"DEBUG: Found cycle! Node {neighbor} is already in the recursion stack.")
+                    cycle_nodes = path[idx:] + [neighbor]
+                    return [(n[0], n[1], particle_info[n]) for n in cycle_nodes]
+                
+                # If not visited, continue DFS
+                elif neighbor not in global_visited:
+                    result = dfs(neighbor)
+                    if result:
+                        return result
+            
+            # Backtrack
+            path.pop()
+            rec_stack.remove(node)
+            return None
+            
+        return dfs(start)
 
     def print_relationships(self):
         # Print all relationships between particles with different subscripts that share squares
