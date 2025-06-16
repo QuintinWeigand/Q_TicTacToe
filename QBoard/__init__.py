@@ -21,10 +21,10 @@ class QBoard:
             raise ValueError("Incorrect board position")
         
     def detect_cycle(self) -> tuple[bool, list]:
-        """
-        Detect cycles between particles from different moves that share squares.
-        Returns (bool, list): whether cycle exists, list of (position, subscript, creation) in cycle
-        """
+        
+        # Detect cycles between particles from different moves that share squares.
+        # Returns (bool, list): whether cycle exists, list of (position, subscript, creation) in cycle
+        
         # Build adjacency list for each square and its subscripts
         square_subscripts = {}  # Maps square -> set of subscripts in that square
         adjacency = {}  # Maps (pos, subscript) -> set of connected (pos, subscript)
@@ -96,7 +96,7 @@ class QBoard:
         return False, []
 
     def print_relationships(self):
-        """Print all relationships between particles with different subscripts that share squares."""
+        # Print all relationships between particles with different subscripts that share squares
         # Keep track of relationships we've already seen
         seen_relationships = set()
 
@@ -131,12 +131,12 @@ class QBoard:
                                 add_relationship(pos1, particle1, pos2, particle2)
 
     def clear_position(self, position: int):
-        """Clear all particles from a position after collapse."""
+        # Clear all particles from a position after collapse
         if 1 <= position <= 9:
             self.__q_board[position - 1].clear_particles()
 
     def get_square(self, position: int) -> QBoardSquare:
-        """Get the QBoardSquare at the given position (1-9)"""
+        # Get the QBoardSquare at the given position (1-9)
         if 1 <= position <= 9:
             return self.__q_board[position - 1]
         raise ValueError("Position must be between 1 and 9")
