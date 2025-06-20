@@ -4,7 +4,7 @@ class Player:
         self.__winner = False
         self.__moves = []
 
-    def addMove(self, movePos: int):
+    def addMove(self, movePos):
         self.__moves.append(movePos)
 
     def getMoves(self) -> list:
