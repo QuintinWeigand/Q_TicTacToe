@@ -15,8 +15,8 @@ class QuantumGame:
         self.shares_square = defaultdict(set)  # pos -> set of (other_pos, subscript) that share the square
 
     def handle_collapse(self, cycle_info) -> bool:
-        print("\nCycle detected! Quantum collapse needed.")
-        print("\nAvailable particles to observe:")
+        # print("\nCycle detected! Quantum collapse needed.")
+        # print("\nAvailable particles to observe:")
         position_particles = {}
         cycle_positions = set(pos for pos, _, _ in cycle_info)
         for pos in range(1, 10):
@@ -31,43 +31,53 @@ class QuantumGame:
                     position_particles[pos].append((subscript, creation, player))
         options = []
         for pos in sorted(position_particles.keys()):
-            print(f"\nPosition {pos}:")
+            # print(f"\nPosition {pos}:")
             for subscript, creation, player in sorted(position_particles[pos]):
                 option_id = len(options)
                 options.append((pos, subscript, creation))
-                print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
-        while True:
-            print(f"\nPlayer {self.current_player}, enter the number of the particle you want to observe.")
-            print(f"Valid choices: {', '.join(str(i) for i in range(len(options)))}")
-            choice_raw = input("Your choice: ")
-            choice_clean = choice_raw.strip()
-            if not choice_clean:
-                print("Empty input. Please enter a number.")
-                continue
-            if not choice_clean.isdigit():
-                print("Invalid input. Please enter a number.")
-                continue
-            choice = int(choice_clean)
-            if not (0 <= choice < len(options)):
-                print(f"Invalid choice. Please choose from: {', '.join(str(i) for i in range(len(options)))}")
-                continue
-            chosen_pos, chosen_subscript, chosen_creation = options[choice]
-            return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+                # print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
+        # The player who did NOT close the cycle chooses the collapse
+        # chooser_player = 3 - self.current_player
+        # while True:
+        #     print(f"\nPlayer {chooser_player}, enter the number of the particle you want to observe.")
+        #     print(f"Valid choices: {', '.join(str(i) for i in range(len(options)))}")
+        #     choice_raw = input("Your choice: ")
+        #     choice_clean = choice_raw.strip()
+        #     if not choice_clean:
+        #         print("Empty input. Please enter a number.")
+        #         continue
+        #     if not choice_clean.isdigit():
+        #         print("Invalid input. Please enter a number.")
+        #         continue
+        #     choice = int(choice_clean)
+        #     if not (0 <= choice < len(options)):
+        #         print(f"Invalid choice. Please choose from: {', '.join(str(i) for i in range(len(options)))}")
+        #         continue
+        #     chosen_pos, chosen_subscript, chosen_creation = options[choice]
+        #     return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+        import random
+        if len(options) == 0:
+            print("No available particles to observe.")
+            return False
+        choice = random.choice([0, 1]) if len(options) > 1 else 0
+        # print(f"[BOT] Randomly selected particle {choice} for collapse.")
+        chosen_pos, chosen_subscript, chosen_creation = options[choice]
+        return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
 
     def handle_quantum_chain_reaction(self, pos, sub, exists, nonexist, to_process, player):
         if pos in exists or pos in nonexist:
             return
         exists[pos] = (sub, player)
-        print(f"→ Position {pos} exists for Player {player} (Move {sub})")
+        # print(f"→ Position {pos} exists for Player {player} (Move {sub})")
         for pair_pos, pair_sub in self.pairs[pos]:
             if pair_pos not in nonexist:
                 nonexist.add(pair_pos)
-                print(f"→ Position {pair_pos} cannot exist (paired with {pos} in Move {pair_sub})")
+                # print(f"→ Position {pair_pos} cannot exist (paired with {pos} in Move {pair_sub})")
                 self.handle_nonexistence(pair_pos, exists, nonexist, to_process)
         for shared_pos, shared_sub in self.shares_square[pos]:
             if shared_pos not in nonexist:
                 nonexist.add(shared_pos)
-                print(f"→ Position {shared_pos} cannot exist (shares square with {pos})")
+                # print(f"→ Position {shared_pos} cannot exist (shares square with {pos})")
                 self.handle_nonexistence(shared_pos, exists, nonexist, to_process)
 
     def handle_nonexistence(self, pos, exists, nonexist, to_process):
@@ -75,36 +85,36 @@ class QuantumGame:
             if pair_pos not in exists and pair_pos not in nonexist:
                 player = 1 if pair_sub % 2 == 1 else 2
                 to_process.append((pair_pos, pair_sub))
-                print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {pos})")
+                # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {pos})")
         for shared_pos, shared_sub in self.shares_square[pos]:
             if shared_pos not in exists and shared_pos not in nonexist:
                 nonexist.add(shared_pos)
-                print(f"→ Position {shared_pos} cannot exist (shares square with nonexistent {pos})")
+                # print(f"→ Position {shared_pos} cannot exist (shares square with nonexistent {pos})")
                 for pair_pos, pair_sub in self.pairs[shared_pos]:
                     if pair_pos not in exists and pair_pos not in nonexist:
                         player = 1 if pair_sub % 2 == 1 else 2
                         to_process.append((pair_pos, pair_sub))
-                        print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
+                        # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
 
     def handle_forced_implications(self, pos, exists, nonexist, to_process):
         for pair_pos, pair_sub in self.pairs[pos]:
             if pair_pos not in exists and pair_pos not in nonexist:
                 player = 1 if pair_sub % 2 == 1 else 2
                 to_process.append((pair_pos, pair_sub))
-                print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {pos})")
+                # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {pos})")
         for shared_pos, shared_sub in self.shares_square[pos]:
             if shared_pos not in exists and shared_pos not in nonexist:
                 nonexist.add(shared_pos)
-                print(f"→ Position {shared_pos} cannot exist (shares square with nonexistent {pos})")
+                # print(f"→ Position {shared_pos} cannot exist (shares square with nonexistent {pos})")
                 for pair_pos, pair_sub in self.pairs[shared_pos]:
                     if pair_pos not in exists and pair_pos not in nonexist:
                         player = 1 if pair_sub % 2 == 1 else 2
                         to_process.append((pair_pos, pair_sub))
-                        print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
+                        # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
 
     def resolve_collapse(self, cycle_info, chosen_pos, chosen_subscript, chosen_creation):
-        print("\nEMERGENCY QUANTUM COLLAPSE RESOLUTION...")
-        print(f"Observing particle {chosen_subscript}[{chosen_creation}] at position {chosen_pos}")
+        # print("\nEMERGENCY QUANTUM COLLAPSE RESOLUTION...")
+        # print(f"Observing particle {chosen_subscript}[{chosen_creation}] at position {chosen_pos}")
         all_particles = []
         for pos in range(1, 10):
             square = self.quantum_board.get_square(pos)
@@ -130,11 +140,11 @@ class QuantumGame:
             if pos in observed:
                 continue
             observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
-            print(f"→ Position {pos} exists for Player {observed[pos][1]} (Move {sub}[{cr}])")
+            # print(f"→ Position {pos} exists for Player {observed[pos][1]} (Move {sub}[{cr}])")
             if (sub, cr) in particle_pairs:
                 pair_pos, pair_cr = particle_pairs[(sub, cr)]
                 eliminated_particles.add((pair_pos, sub, pair_cr))
-                print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
+                # print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
                 checked = set()
                 while True:
                     forced = []
@@ -166,17 +176,18 @@ class QuantumGame:
                 if pos in observed:
                     continue
                 observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
-                print(f"→ Position {pos} must exist for Player {observed[pos][1]} (Move {sub}[{cr}])")
+                # print(f"→ Position {pos} must exist for Player {observed[pos][1]} (Move {sub}[{cr}])")
                 if (sub, cr) in particle_pairs:
                     pair_pos, pair_cr = particle_pairs[(sub, cr)]
                     eliminated_particles.add((pair_pos, sub, pair_cr))
-                    print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
-        print("\nApplying quantum collapse...")
+                    # print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
+        # print("\nApplying quantum collapse...")
         for pos, (sub, player) in observed.items():
             row, col = Board.convertNumPositionToIndex(pos)
             mark = 'X' if player == 1 else 'O'
             if self.classical_board.set(row, col, mark):
-                print(f"→ Position {pos} collapsed to Player {player}'s {mark}")
+                # print(f"→ Position {pos} collapsed to Player {player}'s {mark}")
+                pass
         cleared_positions = set(observed.keys()) | set(p for p, _, _ in eliminated_particles)
         for pos in cleared_positions:
             self.quantum_board.clear_position(pos)
@@ -186,34 +197,38 @@ class QuantumGame:
             self.pairs[pos] = {(p, s) for p, s in self.pairs[pos] if p not in cleared_positions}
         for pos in self.shares_square:
             self.shares_square[pos] = {(p, s) for p, s in self.shares_square[pos] if p not in cleared_positions}
-        print("\nQuantum collapse complete!")
-        print("Realized positions:", ", ".join(f"{pos}→P{observed[pos][1]}" for pos in sorted(observed.keys())))
-        print("Eliminated positions:", ", ".join(str(pos) for pos, _, _ in eliminated_particles))
+        # print("\nQuantum collapse complete!")
+        # print("Realized positions:", ", ".join(f"{pos}→P{observed[pos][1]}" for pos in sorted(observed.keys())))
+        # print("Eliminated positions:", ", ".join(str(pos) for pos, _, _ in eliminated_particles))
         if self.classical_board.hasWinnerOrDraw():
             self.game_over = True
             game_status = self.classical_board.getGameStatus()
             self.winner = game_status.get("winner")
-            print(f"\nGame Over! {self.winner} wins!")
+            # print(f"\nGame Over! {self.winner} wins!")
             return True
         return False
 
     def validate_move_position(self, position: int) -> bool:
         if not (1 <= position <= 9):
-            print("Position must be between 1 and 9!")
+            # print("Position must be between 1 and 9!")
             return False
         row, col = Board.convertNumPositionToIndex(position)
         if not self.classical_board.get(row, col).isdigit():
-            print(f"Position {position} already collapsed! Choose another position.")
+            # print(f"Position {position} already collapsed! Choose another position.")
             return False
         return True
 
-    def make_move(self, position1: int, position2: int) -> bool:
+    def make_move(self, position1: int, position2: int):
+        """
+        Returns (valid, collapse_occurred):
+            valid: True if the move was valid, False otherwise
+            collapse_occurred: True if a collapse occurred on this move, False otherwise
+        """
         try:
             if position1 == position2:
-                print("Must choose two different positions for quantum superposition!")
-                return False
+                return (False, False)
             if not self.validate_move_position(position1) or not self.validate_move_position(position2):
-                return False
+                return (False, False)
             self.quantum_board.add_player_move(position1, self.move_number, 1)
             self.quantum_board.add_player_move(position2, self.move_number, 2)
             self.pairs[position1].add((position2, self.move_number))
@@ -225,24 +240,24 @@ class QuantumGame:
                         other_pos = pos
                         self.shares_square[pos].add((other_pos, particle.get_subscript()))
                         self.shares_square[other_pos].add((pos, self.move_number))
+            collapse = False
             if self.move_number >= 2:
                 has_cycle, cycle_info = self.quantum_board.detect_cycle()
                 if has_cycle:
                     if self.handle_collapse(cycle_info):
-                        return True
+                        collapse = True
             self.current_player = 3 - self.current_player
             self.move_number += 1
-            return True
+            return (True, collapse)
         except ValueError as e:
-            print(f"Invalid move: {e}")
-            return False
+            return (False, False)
 
     def display_game_state(self):
-        print(f"\nCurrent player: {self.current_player}")
-        print(f"Move number: {self.move_number}")
-        print("\nQuantum board state:")
+        # print(f"\nCurrent player: {self.current_player}")
+        # print(f"Move number: {self.move_number}")
+        # print("\nQuantum board state:")
         self.quantum_board.display_board()
-        print("\nClassical board state:")
+        # print("\nClassical board state:")
         self.classical_board.displayBoard()
-        print("\nQuantum relationships:")
+        # print("\nQuantum relationships:")
         self.quantum_board.print_relationships()
