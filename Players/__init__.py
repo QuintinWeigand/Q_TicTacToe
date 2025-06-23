@@ -16,6 +16,7 @@ class Player:
     def getPlayerStatus(self) -> bool:
         return self.__winner
     
+    # TODO: Update for new database entry
     def dictify(self) -> dict:
         return {
                     "Player Number": self.__playerNumber,
