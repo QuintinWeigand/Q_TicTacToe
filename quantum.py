@@ -2,10 +2,6 @@ from QuantumGame.QuantumGame import QuantumGame
 from Players import Player
 
 def main():
-
-    player1 = Player()
-    player2 = Player()
-
     game = QuantumGame()
     
     while not game.game_over:
