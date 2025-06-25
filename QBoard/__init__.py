@@ -26,7 +26,7 @@ class QBoard:
         # Specifically focusing on the shortest path between particles with the same subscript.
         # Returns (bool, list): whether cycle exists, list of (position, subscript, creation) in cycle
         
-        print("\nDEBUG: Running cycle detection...")
+        # print("\nDEBUG: Running cycle detection...")
         
         # Build adjacency list of entangled pairs: (pos, sub, cr) <-> (other_pos, sub, other_cr)
         from collections import defaultdict, deque
@@ -69,7 +69,7 @@ class QBoard:
                     for neighbor in neighbors:
                         if neighbor == path[0] and len(path) > 2:
                             # Found a cycle
-                            print(f"[DEBUG] Detected quantum cycle: {path + [neighbor]}")
+                            # print(f"[DEBUG] Detected quantum cycle: {path + [neighbor]}")
                             return path + [neighbor]
                         if neighbor not in path:
                             stack.append((neighbor, path + [neighbor], not entangled_next))
@@ -78,7 +78,7 @@ class QBoard:
         cycle = find_quantum_cycle()
         if cycle:
             return True, cycle
-        print("[DEBUG] No quantum cycle detected.")
+        # print("[DEBUG] No quantum cycle detected.")
         return False, []
 
         # Find any cycle in the entanglement graph using BFS
@@ -98,15 +98,15 @@ class QBoard:
                             queue.append((neighbor, path + [neighbor]))
             return None
 
-        print("[DEBUG] Entanglement adjacency list:")
-        for k, v in adjacency.items():
-            print(f"  {k}: {list(v)}")
-        print(f"[DEBUG] All particles: {particles}")
+        # print("[DEBUG] Entanglement adjacency list:")
+        # for k, v in adjacency.items():
+        #     print(f"  {k}: {list(v)}")
+        # print(f"[DEBUG] All particles: {particles}")
         cycle = find_cycle()
         if cycle:
-            print(f"[DEBUG] Detected cycle: {cycle}")
+            # print(f"[DEBUG] Detected cycle: {cycle}")
             return True, cycle
-        print("[DEBUG] No cycle detected.")
+        # print("[DEBUG] No cycle detected.")
         return False, []
         
     def _find_shortest_cycle_for_subscript(self, subscript, adjacency, particle_info):
@@ -117,14 +117,14 @@ class QBoard:
         # For each position with this subscript
         nodes_with_subscript = [(pos, subscript) for (pos, sub) in adjacency if sub == subscript]
         
-        print(f"DEBUG: Found {len(nodes_with_subscript)} positions with subscript {subscript}")
+        # print(f"DEBUG: Found {len(nodes_with_subscript)} positions with subscript {subscript}")
         
         if len(nodes_with_subscript) < 2:
             return None
             
         # We should always have exactly 2 positions with same subscript in a quantum move
         pos1, pos2 = nodes_with_subscript[0][0], nodes_with_subscript[1][0]
-        print(f"DEBUG: Looking for cycle between positions {pos1} and {pos2} with subscript {subscript}")
+        # print(f"DEBUG: Looking for cycle between positions {pos1} and {pos2} with subscript {subscript}")
             
         # Use BFS to find shortest path between the two positions with same subscript
         start = nodes_with_subscript[0]
@@ -154,7 +154,7 @@ class QBoard:
                             if (p[0], p[1], p[2]) not in seen:
                                 filtered_path.append(p)
                                 seen.add((p[0], p[1], p[2]))
-                        print(f"DEBUG: Found cycle! Path length: {len(filtered_path)}")
+                        # print(f"DEBUG: Found cycle! Path length: {len(filtered_path)}")
                         return filtered_path  # Return this path as our cycle
 
                     queue.append((neighbor, new_path))
@@ -166,7 +166,7 @@ class QBoard:
         if global_visited is None:
             global_visited = set()
             
-        print(f"DEBUG: Starting DFS cycle detection from node {start}")
+        # print(f"DEBUG: Starting DFS cycle detection from node {start}")
         rec_stack = set()
         path = []
         
@@ -180,7 +180,7 @@ class QBoard:
                 if neighbor in rec_stack:
                     # Extract cycle from path
                     idx = path.index(neighbor)
-                    print(f"DEBUG: Found cycle! Node {neighbor} is already in the recursion stack.")
+                    # print(f"DEBUG: Found cycle! Node {neighbor} is already in the recursion stack.")
                     cycle_nodes = path[idx:] + [neighbor]
                     return [(n[0], n[1], particle_info[n]) for n in cycle_nodes]
                 

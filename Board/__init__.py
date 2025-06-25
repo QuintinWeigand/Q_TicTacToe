@@ -10,6 +10,16 @@ class Board:
                 print(self.__gameboard[row][col] + " ", end="")
             print()
 
+    def getBoard(self) -> str:
+        str_board = ""
+
+        for row in range(len(self.__gameboard)):
+            for col in range(len(self.__gameboard[0])):
+                str_board += self.__gameboard[row][col]
+            str_board += "\n"
+
+        return str_board
+
     def get(self, row, col) -> chr:
         returnCharacter = None
         if self.__validIndex(row, col):

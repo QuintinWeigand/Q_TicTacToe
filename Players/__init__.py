@@ -8,7 +8,7 @@ class Player:
         self.__moves.append(movePos)
 
     def getMoves(self) -> list:
-        return self.__moves.copy()
+        return [list(move) for move in self.__moves]
 
     def setPlayerWinner(self):
         self.__winner = True
