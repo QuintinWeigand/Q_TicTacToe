@@ -19,11 +19,9 @@ def main():
         if collapse_num in steps_dict:
             steps_dict[collapse_num] += 1
         else:
-            steps_dict[collapse_num] = 1
-
-        print(record)
-        time.sleep(5)
-
+            steps_dict[collapse_num] = 12
+    
+    print("Collapse count dictionary: ")
     print(steps_dict)
 
 if __name__ == "__main__":

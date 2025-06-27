@@ -24,6 +24,11 @@ def main():
         else:
             counter[total_moves] = 1
 
+        if total_moves == 3:
+            print(player1_moves)
+            print(player2_moves)
+            print(document["Board"])
+
     keys = list(counter.keys())
     values = list(counter.values())
 
