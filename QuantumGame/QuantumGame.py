@@ -59,9 +59,9 @@ class QuantumGame:
         if len(options) == 0:
             print("No available particles to observe.")
             return False
-        choice = random.choice([0, 1]) if len(options) > 1 else 0
-        # print(f"[BOT] Randomly selected particle {choice} for collapse.")
+        choice = random.choice(list(range(len(options)))) if len(options) > 1 else 0
         chosen_pos, chosen_subscript, chosen_creation = options[choice]
+        print(f"[BOT] Randomly selected particle {choice}: Position {chosen_pos}, Subscript {chosen_subscript}, Creation {chosen_creation} for collapse.")
         return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
 
     def handle_quantum_chain_reaction(self, pos, sub, exists, nonexist, to_process, player):
@@ -113,8 +113,15 @@ class QuantumGame:
                         # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
 
     def resolve_collapse(self, cycle_info, chosen_pos, chosen_subscript, chosen_creation):
-        # print("\nEMERGENCY QUANTUM COLLAPSE RESOLUTION...")
-        # print(f"Observing particle {chosen_subscript}[{chosen_creation}] at position {chosen_pos}")
+        # Only consider particles in the cycle
+        cycle_particles = set((pos, sub, cr) for pos, sub, cr in cycle_info)
+        from collections import defaultdict
+        # Map subscript to all positions for that subscript in the cycle
+        sub_to_cycle_particles = defaultdict(list)
+        for pos, sub, cr in cycle_particles:
+            sub_to_cycle_particles[sub].append((pos, cr))
+
+        # Gather all particles on the board for subscript rule enforcement
         all_particles = []
         for pos in range(1, 10):
             square = self.quantum_board.get_square(pos)
@@ -122,73 +129,43 @@ class QuantumGame:
                 sub = p.get_subscript()
                 cr = p.get_creation_number()
                 all_particles.append((pos, sub, cr))
-        from collections import defaultdict, deque
-        sub_to_particles = defaultdict(list)
+        all_sub_to_particles = defaultdict(list)
         for pos, sub, cr in all_particles:
-            sub_to_particles[sub].append((pos, cr))
-        particle_pairs = {}
-        for sub, particles in sub_to_particles.items():
-            if len(particles) == 2:
-                (pos1, cr1), (pos2, cr2) = particles
-                particle_pairs[(sub, cr1)] = (pos2, cr2)
-                particle_pairs[(sub, cr2)] = (pos1, cr1)
+            all_sub_to_particles[sub].append((pos, cr))
+
+        # Allow collapse for a subscript if:
+        # - There are exactly two particles with that subscript on the board, and both are in the cycle
+        # - Or, there is only one particle with that subscript (edge case)
+        allowed_cycle_particles = set()
+        for sub, plist in sub_to_cycle_particles.items():
+            all_plist = all_sub_to_particles[sub]
+            if len(all_plist) == 2:
+                # Both particles with this subscript are in the cycle
+                cycle_set = set(plist)
+                all_set = set(all_plist)
+                if cycle_set == all_set:
+                    allowed_cycle_particles.update([(pos, sub, cr) for pos, cr in plist])
+            elif len(all_plist) == 1:
+                allowed_cycle_particles.update([(pos, sub, cr) for pos, cr in plist])
+        # If the chosen particle is not allowed, do nothing
+        if (chosen_pos, chosen_subscript, chosen_creation) not in allowed_cycle_particles:
+            print("Collapse not allowed for this particle due to subscript rule.")
+            return False
+
+        # Collapse only allowed particles in the cycle
         observed = {}
-        eliminated_particles = set()
-        to_observe = deque([(chosen_pos, chosen_subscript, chosen_creation)])
-        while to_observe:
-            pos, sub, cr = to_observe.popleft()
-            if pos in observed:
-                continue
-            observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
-            # print(f"→ Position {pos} exists for Player {observed[pos][1]} (Move {sub}[{cr}])")
-            if (sub, cr) in particle_pairs:
-                pair_pos, pair_cr = particle_pairs[(sub, cr)]
-                eliminated_particles.add((pair_pos, sub, pair_cr))
-                # print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
-                checked = set()
-                while True:
-                    forced = []
-                    for check_pos in range(1, 10):
-                        if check_pos in observed or check_pos in checked:
-                            continue
-                        square_particles = [(s, c) for p, s, c in all_particles if p == check_pos and (p, s, c) not in eliminated_particles]
-                        if len(square_particles) == 1:
-                            s2, c2 = square_particles[0]
-                            forced.append((check_pos, s2, c2))
-                    if not forced:
-                        break
-                    for fpos, fsub, fcr in forced:
-                        if fpos not in observed:
-                            to_observe.append((fpos, fsub, fcr))
-                            checked.add(fpos)
-        while True:
-            forced = []
-            for pos in range(1, 10):
-                if pos in observed:
-                    continue
-                square_particles = [(sub, cr) for p, sub, cr in all_particles if p == pos and (p, sub, cr) not in eliminated_particles]
-                if len(square_particles) == 1:
-                    sub, cr = square_particles[0]
-                    forced.append((pos, sub, cr))
-            if not forced:
-                break
-            for pos, sub, cr in forced:
-                if pos in observed:
-                    continue
-                observed[pos] = (sub, 1 if sub % 2 == 1 else 2)
-                # print(f"→ Position {pos} must exist for Player {observed[pos][1]} (Move {sub}[{cr}])")
-                if (sub, cr) in particle_pairs:
-                    pair_pos, pair_cr = particle_pairs[(sub, cr)]
-                    eliminated_particles.add((pair_pos, sub, pair_cr))
-                    # print(f"→ Eliminating pair at position {pair_pos} (Move {sub}[{pair_cr}])")
-        # print("\nApplying quantum collapse...")
+        for pos, sub, cr in allowed_cycle_particles:
+            player = 1 if sub % 2 == 1 else 2
+            observed[pos] = (sub, player)
+
+        # Apply collapse to classical board
         for pos, (sub, player) in observed.items():
             row, col = Board.convertNumPositionToIndex(pos)
             mark = 'X' if player == 1 else 'O'
-            if self.classical_board.set(row, col, mark):
-                # print(f"→ Position {pos} collapsed to Player {player}'s {mark}")
-                pass
-        cleared_positions = set(observed.keys()) | set(p for p, _, _ in eliminated_particles)
+            self.classical_board.set(row, col, mark)
+
+        # Clear quantum board positions and relationships for collapsed positions
+        cleared_positions = set(observed.keys())
         for pos in cleared_positions:
             self.quantum_board.clear_position(pos)
             self.pairs.pop(pos, None)
@@ -197,14 +174,11 @@ class QuantumGame:
             self.pairs[pos] = {(p, s) for p, s in self.pairs[pos] if p not in cleared_positions}
         for pos in self.shares_square:
             self.shares_square[pos] = {(p, s) for p, s in self.shares_square[pos] if p not in cleared_positions}
-        # print("\nQuantum collapse complete!")
-        # print("Realized positions:", ", ".join(f"{pos}→P{observed[pos][1]}" for pos in sorted(observed.keys())))
-        # print("Eliminated positions:", ", ".join(str(pos) for pos, _, _ in eliminated_particles))
+
         if self.classical_board.hasWinnerOrDraw():
             self.game_over = True
             game_status = self.classical_board.getGameStatus()
             self.winner = game_status.get("winner")
-            # print(f"\nGame Over! {self.winner} wins!")
             return True
         return False
 
