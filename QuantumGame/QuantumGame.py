@@ -35,34 +35,38 @@ class QuantumGame:
             for subscript, creation, player in sorted(position_particles[pos]):
                 option_id = len(options)
                 options.append((pos, subscript, creation))
-                # print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
+                print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
         # The player who did NOT close the cycle chooses the collapse
-        # chooser_player = 3 - self.current_player
-        # while True:
-        #     print(f"\nPlayer {chooser_player}, enter the number of the particle you want to observe.")
-        #     print(f"Valid choices: {', '.join(str(i) for i in range(len(options)))}")
-        #     choice_raw = input("Your choice: ")
-        #     choice_clean = choice_raw.strip()
-        #     if not choice_clean:
-        #         print("Empty input. Please enter a number.")
-        #         continue
-        #     if not choice_clean.isdigit():
-        #         print("Invalid input. Please enter a number.")
-        #         continue
-        #     choice = int(choice_clean)
-        #     if not (0 <= choice < len(options)):
-        #         print(f"Invalid choice. Please choose from: {', '.join(str(i) for i in range(len(options)))}")
-        #         continue
-        #     chosen_pos, chosen_subscript, chosen_creation = options[choice]
-        #     return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
-        import random
-        if len(options) == 0:
-            print("No available particles to observe.")
-            return False
-        choice = random.choice(list(range(len(options)))) if len(options) > 1 else 0
-        chosen_pos, chosen_subscript, chosen_creation = options[choice]
-        print(f"[BOT] Randomly selected particle {choice}: Position {chosen_pos}, Subscript {chosen_subscript}, Creation {chosen_creation} for collapse.")
-        return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+        chooser_player = 3 - self.current_player
+        while True:
+            print(f"\nPlayer {chooser_player}, enter the number of the particle you want to observe.")
+            print(f"Valid choices: {', '.join(str(i) for i in range(len(options)))}")
+            choice_raw = input("Your choice: ")
+            choice_clean = choice_raw.strip()
+            if not choice_clean:
+                print("Empty input. Please enter a number.")
+                continue
+            if not choice_clean.isdigit():
+                print("Invalid input. Please enter a number.")
+                continue
+            choice = int(choice_clean)
+            if not (0 <= choice < len(options)):
+                print(f"Invalid choice. Please choose from: {', '.join(str(i) for i in range(len(options)))}")
+                continue
+            chosen_pos, chosen_subscript, chosen_creation = options[choice]
+            return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+        # import random
+        # if len(options) == 0:
+        #     print("No available particles to observe.")
+        #     return False
+        
+        # # choice = random.choice(list(range(len(options)))) if len(options) > 1 else 0
+
+        # choice = int(input("Please select the position to collapse -> "))
+
+        # chosen_pos, chosen_subscript, chosen_creation = options[choice]
+        # print(f"[BOT] Randomly selected particle {choice}: Position {chosen_pos}, Subscript {chosen_subscript}, Creation {chosen_creation} for collapse.")
+        # return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
 
     def handle_quantum_chain_reaction(self, pos, sub, exists, nonexist, to_process, player):
         if pos in exists or pos in nonexist:
@@ -113,67 +117,65 @@ class QuantumGame:
                         # print(f"→ Must process: Position {pair_pos} (Move {pair_sub}, forced by {shared_pos})")
 
     def resolve_collapse(self, cycle_info, chosen_pos, chosen_subscript, chosen_creation):
-        # Only consider particles in the cycle
-        cycle_particles = set((pos, sub, cr) for pos, sub, cr in cycle_info)
-        from collections import defaultdict
-        # Map subscript to all positions for that subscript in the cycle
-        sub_to_cycle_particles = defaultdict(list)
-        for pos, sub, cr in cycle_particles:
-            sub_to_cycle_particles[sub].append((pos, cr))
+        # This is the final, correct implementation of the collapse logic.
 
-        # Gather all particles on the board for subscript rule enforcement
+        # 1. Data setup: Get all particles on the board for easy lookup.
         all_particles = []
         for pos in range(1, 10):
             square = self.quantum_board.get_square(pos)
             for p in square.get_particle_list_copy():
-                sub = p.get_subscript()
-                cr = p.get_creation_number()
-                all_particles.append((pos, sub, cr))
-        all_sub_to_particles = defaultdict(list)
-        for pos, sub, cr in all_particles:
-            all_sub_to_particles[sub].append((pos, cr))
+                all_particles.append((pos, p.get_subscript(), p.get_creation_number()))
+        
+        sub_to_all_particles = defaultdict(list)
+        for p in all_particles:
+            sub_to_all_particles[p[1]].append(p)
 
-        # Allow collapse for a subscript if:
-        # - There are exactly two particles with that subscript on the board, and both are in the cycle
-        # - Or, there is only one particle with that subscript (edge case)
-        allowed_cycle_particles = set()
-        for sub, plist in sub_to_cycle_particles.items():
-            all_plist = all_sub_to_particles[sub]
-            if len(all_plist) == 2:
-                # Both particles with this subscript are in the cycle
-                cycle_set = set(plist)
-                all_set = set(all_plist)
-                if cycle_set == all_set:
-                    allowed_cycle_particles.update([(pos, sub, cr) for pos, cr in plist])
-            elif len(all_plist) == 1:
-                allowed_cycle_particles.update([(pos, sub, cr) for pos, cr in plist])
-        # If the chosen particle is not allowed, do nothing
-        if (chosen_pos, chosen_subscript, chosen_creation) not in allowed_cycle_particles:
-            print("Collapse not allowed for this particle due to subscript rule.")
-            return False
-
-        # Collapse only allowed particles in the cycle
+        # 2. The collapse process
         observed = {}
-        for pos, sub, cr in allowed_cycle_particles:
-            player = 1 if sub % 2 == 1 else 2
-            observed[pos] = (sub, player)
+        
+        # A queue of positions that we know the final state of.
+        # It stores tuples of (position, subscript) that are now classical facts.
+        resolution_queue = [(chosen_pos, chosen_subscript)]
+        resolved_positions = set()
 
-        # Apply collapse to classical board
+        while resolution_queue:
+            pos_to_set, sub_to_set = resolution_queue.pop(0)
+
+            if pos_to_set in resolved_positions:
+                continue
+
+            # This position is now resolved. Record its state.
+            player = 1 if sub_to_set % 2 == 1 else 2
+            observed[pos_to_set] = (sub_to_set, player)
+            resolved_positions.add(pos_to_set)
+
+            # CONSEQUENCE: Find all other particles that were at this newly resolved position.
+            # They are annihilated. Their entangled partners' positions must now resolve.
+            for p_pos, p_sub, p_cr in all_particles:
+                # If a different particle was also at this position...
+                if p_pos == pos_to_set and p_sub != sub_to_set:
+                    
+                    # ...find its entangled partner.
+                    pair = sub_to_all_particles.get(p_sub, [])
+                    if len(pair) == 2:
+                        p1, p2 = pair
+                        other_particle = p2 if p1[0] == pos_to_set else p1
+                        other_pos, other_sub, _ = other_particle
+                        
+                        # The partner's position is now forced to resolve. Add it to the queue.
+                        if other_pos not in resolved_positions:
+                            resolution_queue.append((other_pos, other_sub))
+
+        # Apply the fully resolved collapse to the classical board.
         for pos, (sub, player) in observed.items():
             row, col = Board.convertNumPositionToIndex(pos)
             mark = 'X' if player == 1 else 'O'
             self.classical_board.set(row, col, mark)
 
-        # Clear quantum board positions and relationships for collapsed positions
+        # Clear all affected particles from the quantum board.
         cleared_positions = set(observed.keys())
         for pos in cleared_positions:
             self.quantum_board.clear_position(pos)
-            self.pairs.pop(pos, None)
-            self.shares_square.pop(pos, None)
-        for pos in self.pairs:
-            self.pairs[pos] = {(p, s) for p, s in self.pairs[pos] if p not in cleared_positions}
-        for pos in self.shares_square:
-            self.shares_square[pos] = {(p, s) for p, s in self.shares_square[pos] if p not in cleared_positions}
 
         if self.classical_board.hasWinnerOrDraw():
             self.game_over = True
