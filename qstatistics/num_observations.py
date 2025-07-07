@@ -19,7 +19,7 @@ def main():
         if collapse_num in steps_dict:
             steps_dict[collapse_num] += 1
         else:
-            steps_dict[collapse_num] = 12
+            steps_dict[collapse_num] = 1
     
     print("Collapse count dictionary: ")
     print(steps_dict)
@@ -27,5 +27,5 @@ def main():
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:
         db = client["TicTacToe"]
-        collection = db["QGameResults"]
+        collection = db["QGameResults_1M"]
         main()

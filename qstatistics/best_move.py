@@ -3,7 +3,7 @@ from collections import Counter
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["TicTacToe"]
-collection = db["QGameResults_10M"]
+collection = db["QGameResults_1M"]
 
 counter = Counter()
 
