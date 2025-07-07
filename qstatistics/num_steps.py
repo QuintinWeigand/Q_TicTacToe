@@ -35,16 +35,16 @@ def main():
     bars = plt.bar(keys, values)
     plt.xlabel('Total Moves')
     plt.ylabel('Number of Games')
-    plt.title('Distribution of Total Moves in Games')
+    plt.title('Distribution of Total Moves in Games - 10M')
     plt.tight_layout()
 
     plt.bar_label(bars, padding=3)
     
-    plt.savefig("plots/num_steps.png")
+    plt.savefig("plots/num_steps_10M.png")
 
 
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:
         database = client["TicTacToe"]
-        collection = database["QGameResults"]
+        collection = database["QGameResults_10M"]
         main()
