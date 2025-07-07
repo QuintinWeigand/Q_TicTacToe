@@ -1,6 +1,7 @@
 from QBoard import QBoard
 from Board import Board
 from collections import defaultdict
+import random
 
 class QuantumGame:
     def __init__(self):
@@ -35,38 +36,21 @@ class QuantumGame:
             for subscript, creation, player in sorted(position_particles[pos]):
                 option_id = len(options)
                 options.append((pos, subscript, creation))
-                print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
+                # print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
         # The player who did NOT close the cycle chooses the collapse
         chooser_player = 3 - self.current_player
-        while True:
-            print(f"\nPlayer {chooser_player}, enter the number of the particle you want to observe.")
-            print(f"Valid choices: {', '.join(str(i) for i in range(len(options)))}")
-            choice_raw = input("Your choice: ")
-            choice_clean = choice_raw.strip()
-            if not choice_clean:
-                print("Empty input. Please enter a number.")
-                continue
-            if not choice_clean.isdigit():
-                print("Invalid input. Please enter a number.")
-                continue
-            choice = int(choice_clean)
-            if not (0 <= choice < len(options)):
-                print(f"Invalid choice. Please choose from: {', '.join(str(i) for i in range(len(options)))}")
-                continue
-            chosen_pos, chosen_subscript, chosen_creation = options[choice]
-            return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
-        # import random
-        # if len(options) == 0:
-        #     print("No available particles to observe.")
-        #     return False
+        if not options:
+            # print("No available particles to observe.")
+            return False
         
-        # # choice = random.choice(list(range(len(options)))) if len(options) > 1 else 0
-
-        # choice = int(input("Please select the position to collapse -> "))
-
-        # chosen_pos, chosen_subscript, chosen_creation = options[choice]
+        if len(options) == 1:
+            choice = 0
+        else:
+            choice = random.randint(0, 1)
+        
+        chosen_pos, chosen_subscript, chosen_creation = options[choice]
         # print(f"[BOT] Randomly selected particle {choice}: Position {chosen_pos}, Subscript {chosen_subscript}, Creation {chosen_creation} for collapse.")
-        # return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+        return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
 
     def handle_quantum_chain_reaction(self, pos, sub, exists, nonexist, to_process, player):
         if pos in exists or pos in nonexist:

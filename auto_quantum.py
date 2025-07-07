@@ -101,7 +101,9 @@ def main():
 
         # print(final_game_stats)
 
-        if game_number % 10000 == 0:
+        game_increment = num_games / 100
+
+        if game_number % game_increment == 0:
             print(f"Game Number: {game_number} | {((game_number / num_games) * 100):.2f}%")
 
         if len(game_document_list) == 100:
@@ -110,8 +112,9 @@ def main():
             game_document_list.clear()
 
 if __name__ == "__main__":
+    collection_name = "QGameResults_1M"
     # Ensures the client is created and ALWAYS closed correctly (even with an exception)
     with MongoClient("mongodb://localhost:27017") as client:
         database = client["TicTacToe"]
-        collection = database["QGameResults"]
+        collection = database[collection_name]
         main()
