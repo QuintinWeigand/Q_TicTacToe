@@ -8,7 +8,15 @@ def main():
         player2 = doc.get("Player2")
         player1_moves = player1.get("moves")
         player2_moves = player2.get("moves")
+        board = doc.get("Board")
         size = len(player1_moves) + len(player2_moves)
+
+        if size == 4:
+            print("Player1: ", player1_moves)
+            print("Player2: ", player2_moves)
+            print(board)
+            print("---------------")
+            
 
         if size in move_dict:
             move_dict[size] += 1
