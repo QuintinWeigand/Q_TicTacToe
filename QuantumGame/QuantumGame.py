@@ -221,3 +221,17 @@ class QuantumGame:
         self.classical_board.displayBoard()
         # print("\nQuantum relationships:")
         self.quantum_board.print_relationships()
+
+    def get_game_state(self):
+        # Returns a string representation of the current game state.
+        
+        state = []
+        state.append(f"Current player: {self.current_player}")
+        state.append(f"Move number: {self.move_number}")
+        state.append("\nQuantum board state:")
+        state.append(self.quantum_board.get_board())  # Assuming QBoard has a method to return board as string
+        state.append("\nClassical board state:")
+        state.append(self.classical_board.getBoard())  # Assuming Board has a method to return board as string
+        return "\n".join(state)
+
+

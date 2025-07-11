@@ -13,6 +13,16 @@ class QBoard:
             display_str = ' '.join(f"{p.get_subscript()}[{p.get_creation_number()}]" for p in particles) if particles else '-'
             print(f"{i + 1} | {display_str}")
 
+    def get_board(self):
+        board_representation = []
+        for i in range(len(self.__q_board)):
+            square = self.__q_board[i]
+            particles = square.get_particle_list_copy()
+            # Show subscripts and creation numbers
+            display_str = ' '.join(f"{p.get_subscript()}[{p.get_creation_number()}]" for p in particles) if particles else '-'
+            board_representation.append(f"{i + 1} | {display_str}")
+        return "\n".join(board_representation)
+
     def add_player_move(self, board_position: int, move_number: int, creation_number: int):
         if board_position >= 1 and board_position <= 9:
             particle = QParticle(move_number, creation_number)
@@ -242,3 +252,4 @@ class QBoard:
         if 1 <= position <= 9:
             return self.__q_board[position - 1]
         raise ValueError("Position must be between 1 and 9")
+
