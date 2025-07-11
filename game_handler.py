@@ -12,7 +12,7 @@ def get_game_state():
     return jsonify({
         'game_over': game.game_over,
         'current_player': game.current_player,
-        'board': game.get_game_state()  # Assuming QuantumGame has a method to get the board state
+        'board': game.get_game_state()
     })
 
 # Example WebSocket event to broadcast game state
