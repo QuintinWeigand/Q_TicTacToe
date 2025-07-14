@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quantum Tic Tac Toe</title>
+</head>
+<body>
+    <h1>Game State</h1>
+    <pre id="gameState">Loading...</pre>
+
+    <script>
+        fetch("/api/game-state")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("gameState").textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById("gameState").textContent = "Error fetching game state.";
+                console.error(error);
+            })
+    </script>
+</body>
+
+</html>
