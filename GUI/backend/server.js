@@ -8,6 +8,8 @@ const app = express();
 // Storing the game state
 let gameState = null;
 
+app.use(express.static(path.join(__dirname, '../')));
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, '../Q_TicTacToe.html'));
 });

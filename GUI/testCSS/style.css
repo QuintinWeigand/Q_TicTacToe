@@ -1,0 +1,21 @@
+.tic-tac-toe-board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    margin: 20px auto;
+}
+
+.tic-tac-toe-cell {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    border: 2px solid black;
+}
+
+.sub-cell {
+    border: 1px solid #ccc;
+}
+
+.sub-cell:hover {
+    background-color: #f0f0f0;
+}
