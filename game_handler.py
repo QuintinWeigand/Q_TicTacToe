@@ -1,55 +1,54 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 from QuantumGame.QuantumGame import QuantumGame
-import threading
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 socketio = SocketIO(app)
+
 game = QuantumGame()
 
-@app.route('/game_state', methods=['GET'])
-def get_game_state():
+# Emit game state whenever it changes
+def emit_game_state():
+     socketio.emit('game_state', {
+        'game_over': game.game_over,
+        'current_player': game.current_player,
+        'board': game.get_game_state()
+    })
+
+@app.route('/api/play-move', methods=['POST'])
+def play_move():
+    print("play_move route accessed")  # Log route access
+    data = request.get_json()  # Extract JSON payload
+    print(f"Received data: {data}")  # Log the data
+    if not data:
+        return jsonify({"error": "Invalid data"}), 400
+
+    pos1 = data.get("input1")
+    pos2 = data.get("input2")
+
+    try:
+        pos1 = int(pos1)
+        pos2 = int(pos2)
+        print(f"Positions received: pos1={pos1}, pos2={pos2}")  # Log positions
+        if game.make_move(pos1, pos2):
+            emit_game_state()  # Push updated game state to clients
+            return jsonify({"success": True, "message": "Move successful!"})
+        else:
+            return jsonify({"success": False, "message": "Move failed! Try again."})
+    except ValueError:
+        return jsonify({"error": "Invalid positions! Must be numbers between 1 and 9."}), 400
+
+@app.route('/api/game-state', methods=['GET'])
+def game_state():
     return jsonify({
         'game_over': game.game_over,
         'current_player': game.current_player,
         'board': game.get_game_state()
     })
 
-# Example WebSocket event to broadcast game state
-@socketio.on('update_game_state')
-def update_game_state():
-    socketio.emit('game_state', {
-        'game_over': game.game_over,
-        'current_player': game.current_player,
-        'board': game.get_game_state()
-    })
-
-def run_flask():
-    socketio.run(app, debug=True, use_reloader=False)
-
-def main():
-    # Start the Flask server in a separate thread
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    while not game.game_over:
-        game.display_game_state()
-        try:
-            print(f"\nPlayer {game.current_player}'s turn")
-            print("Enter two different positions (1-9) for quantum superposition")
-            pos1 = int(input("First position: "))
-            pos2 = int(input("Second position: "))
-            
-            if game.make_move(pos1, pos2):
-                print("Move successful!")
-            else:
-                print("Move failed! Try again.")
-                
-        except ValueError:
-            print("Invalid input! Please enter numbers between 1 and 9.")
-
-    print("\nFinal game state:")
-    game.display_game_state()
 if __name__ == "__main__":
-    main()
+    socketio.run(app, port=5000)
+
+

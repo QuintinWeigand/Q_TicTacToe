@@ -7,17 +7,64 @@
     <h1>Game State</h1>
     <pre id="gameState">Loading...</pre>
 
+    <div>
+        <label for="input1">Input 1:</label>
+        <textarea id="input1" rows="1" cols="20"></textarea>
+    </div>
+    <div>
+        <label for="input2">Input 2:</label>
+        <textarea id="input2" rows="1" cols="20"></textarea>
+    </div>
+
+    <div>
+        <button type="button" onclick="playMove()">Play Move</button>
+    </div>
+
     <script>
-        fetch("/api/game-state")
+        function fetchAndUpdateGameState() {
+            fetch("/api/update-game-state", { method: "POST" })
+                .then(response => response.json())
+                .then(() => {
+                    return fetch("/api/game-state");
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("gameState").textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById("gameState").textContent = "Error fetching game state.";
+                    console.error(error);
+                });
+        }
+
+        function playMove() {
+            console.log("playMove function has been called");
+            const input1 = document.getElementById("input1");
+            const input2 = document.getElementById("input2");
+
+            fetch("http://localhost:5000/api/play-move", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ input1: input1.value, input2: input2.value })
+            })
             .then(response => response.json())
             .then(data => {
-                document.getElementById("gameState").textContent = JSON.stringify(data, null, 2);
+                console.log("Move played successfully:", data);
+                fetchAndUpdateGameState(); // Refresh the game state after playing a move
+
+                // Clear the input fields
+                input1.value = "";
+                input2.value = "";
             })
             .catch(error => {
-                document.getElementById("gameState").textContent = "Error fetching game state.";
-                console.error(error);
-            })
+                console.error("Error playing move:", error);
+            });
+        }
+
+        // Call the function initially to load the game state
+        fetchAndUpdateGameState();
     </script>
 </body>
-
 </html>

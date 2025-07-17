@@ -4,8 +4,6 @@ const http = require("http");
 
 const app = express();
 
-// Temporarily calling the function manually for now.
-fetchGameState()
 
 // Storing the game state
 let gameState = null;
@@ -27,9 +25,13 @@ app.get("/api/game-state", (req, res) => {
     }
 });
 
+app.post("/api/update-game-state", (req, res) => {
+    fetchGameState();
+    res.json({ message: "Game state updated successfully." });
+});
 
 function fetchGameState() {
-    http.get("http://localhost:5000/game_state", (res) => {
+    http.get("http://localhost:5000/api/game-state", (res) => {
         let data = "";
 
         res.on("data", (chunk) => {
@@ -39,12 +41,12 @@ function fetchGameState() {
         res.on("end", () => {
             try {
                 const jsonData = JSON.parse(data);
-                gameState = jsonData
+                gameState = jsonData;
             }
             catch (error) {
-                console.error("Error parsing JSON:}", error);
+                console.error("Error parsing JSON:", error);
             }
-        })
+        });
     }).on("error", (err) => {
         console.error("Error fetching data:", err);
     });
