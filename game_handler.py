@@ -45,8 +45,15 @@ def game_state():
     return jsonify({
         'game_over': game.game_over,
         'current_player': game.current_player,
-        'board': game.get_game_state()
+        'board': game.get_game_state(),
+        'winner': game.winner
     })
+
+@app.route('/api/restart-game', methods=['POST'])
+def restart_game():
+    print("Restarting the game...")  # Log the restart action
+    game.reset()  # Call the reset method in your game logic
+    return jsonify({"success": True, "message": "Game restarted successfully!"})
 
 if __name__ == "__main__":
     socketio.run(app, port=5000)

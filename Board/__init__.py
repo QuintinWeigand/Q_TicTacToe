@@ -108,4 +108,8 @@ class Board:
             return row, col
         else:
             raise ValueError("Position must be between 1 and 9")
+        
+    def clear(self):
+        self.__gameboard = [['1','2','3'],['4','5','6'],['7','8','9']]
+        self.__gamestatus = {}
 

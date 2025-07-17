@@ -223,15 +223,22 @@ class QuantumGame:
         self.quantum_board.print_relationships()
 
     def get_game_state(self):
-        # Returns a string representation of the current game state.
-        
-        state = []
-        state.append(f"Current player: {self.current_player}")
-        state.append(f"Move number: {self.move_number}")
-        state.append("\nQuantum board state:")
-        state.append(self.quantum_board.get_board())  # Assuming QBoard has a method to return board as string
-        state.append("\nClassical board state:")
-        state.append(self.classical_board.getBoard())  # Assuming Board has a method to return board as string
-        return "\n".join(state)
+        # Returns a JSON representation of the current game state.
+        return {
+            "current_player": self.current_player,
+            "move_number": self.move_number,
+            "quantum_board_state": self.quantum_board.get_board(),
+            "classical_board_state": self.classical_board.getBoard()
+        }
 
+    def reset(self):
+        # This is a very simple way to clear the game. Luckily we are garbage collected
+        self.quantum_board = QBoard()
+        self.classical_board = Board()
+        self.current_player = 1
+        self.move_number = 1
+        self.game_over = False
+        self.winner = None
+        self.pairs = defaultdict(set)
+        self.shares_square = defaultdict(set)
 

@@ -4,7 +4,7 @@
     <title>Quantum Tic Tac Toe</title>
 </head>
 <body>
-    <h1>Game State</h1>
+    <h1>Quantum Tic Tac Toe</h1>
     <pre id="gameState">Loading...</pre>
 
     <div>
@@ -18,6 +18,10 @@
 
     <div>
         <button type="button" onclick="playMove()">Play Move</button>
+    </div>
+
+    <div>
+        <button type="button" onclick="restartGame()">Restart Game</button>
     </div>
 
     <script>
@@ -60,6 +64,25 @@
             })
             .catch(error => {
                 console.error("Error playing move:", error);
+            });
+        }
+
+        function restartGame() {
+            console.log("restartGame function has been called");
+
+            fetch("http://localhost:5000/api/restart-game", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Game restarted successfully:", data);
+                fetchAndUpdateGameState(); // Refresh the game state after restarting
+            })
+            .catch(error => {
+                console.error("Error restarting game:", error);
             });
         }
 
