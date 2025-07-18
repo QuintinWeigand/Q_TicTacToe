@@ -3,27 +3,10 @@
 <head>
     <title>Quantum Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="qtic.ico" type="image/x-icon">
 </head>
 <body>
     <h1>Quantum Tic Tac Toe</h1>
-    <pre id="gameState">Loading...</pre>
-
-    <div>
-        <label for="input1">Input 1:</label>
-        <textarea id="input1" rows="1" cols="20"></textarea>
-    </div>
-    <div>
-        <label for="input2">Input 2:</label>
-        <textarea id="input2" rows="1" cols="20"></textarea>
-    </div>
-
-    <div>
-        <button type="button" onclick="playMove()">Play Move</button>
-    </div>
-
-    <div>
-        <button type="button" onclick="restartGame()">Restart Game</button>
-    </div>
 
     <div class="tic-tac-toe-board" id="ticTacToeBoard">
         <div class="tic-tac-toe-cell" data-cell="0"></div>
@@ -35,6 +18,22 @@
         <div class="tic-tac-toe-cell" data-cell="6"></div>
         <div class="tic-tac-toe-cell" data-cell="7"></div>
         <div class="tic-tac-toe-cell" data-cell="8"></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 20px;">
+        <div style="display: flex; gap: 20px;">
+            <textarea id="input1" rows="1" cols="20"></textarea>
+            <textarea id="input2" rows="1" cols="20"></textarea>
+        </div>
+        <div>
+            <button type="button" onclick="playMove()">Play Move</button>
+        </div>
+        <div>
+            <button type="button" onclick="restartGame()">Restart Game</button>
+        </div>
+        <div style="margin-top: 20px;">
+            <p>Enter your moves in the text areas above.</p>
+        </div>
     </div>
 
     <script>
@@ -120,12 +119,11 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById("gameState").textContent = JSON.stringify(data, null, 2);
+                    console.log("Game state:", data); // Log the game state to the console
                     renderQuantumBoard(data.board.quantum_board_state, data.board.classical_board_state); // Update the board visualization
                 })
                 .catch(error => {
-                    document.getElementById("gameState").textContent = "Error fetching game state.";
-                    console.error(error);
+                    console.error("Error fetching game state:", error);
                 });
         }
 
