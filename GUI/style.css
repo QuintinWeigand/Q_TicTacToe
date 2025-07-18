@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    background-color: #add8e6; /* Light blue */
     margin: 0;
     padding: 0;
     display: flex;
@@ -55,6 +55,7 @@ button:hover {
 }
 
 .tic-tac-toe-cell {
+    position: relative; /* Ensure cells are positioned relative to contain SVGs */
     background-color: white;
     border: 2px solid #333;
     display: block;
@@ -66,10 +67,6 @@ button:hover {
     padding: 5px;
     box-sizing: border-box;
 }
-
-/* .tic-tac-toe-cell:hover {
-    transform: scale(1.05);
-} */
 
 .circle {
     width: 30px;
@@ -85,10 +82,10 @@ button:hover {
 }
 
 svg {
+    width: 100%; /* Match the size of the cell */
+    height: 100%; /* Match the size of the cell */
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     font-weight: normal;
 }
