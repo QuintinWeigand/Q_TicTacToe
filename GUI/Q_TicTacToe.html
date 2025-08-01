@@ -38,6 +38,19 @@
         </div>
     </div>
 
+    <div id="collapseContainer"></div>
+
+    <style>
+        #collapseContainer {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
+
     <script>
         function renderQuantumBoard(quantumBoardState, classicalBoardState) {
             const boardElement = document.getElementById("ticTacToeBoard");
@@ -114,7 +127,6 @@
         }
 
         function fetchAndUpdateGameState() {
-            checkCollapseOptions();
             fetch("/api/update-game-state", { method: "POST" })
                 .then(response => response.json())
                 .then(() => {
@@ -133,9 +145,24 @@
                     const winnerDisplayElement = document.getElementById("winnerDisplay");
                     if (data.game_over && data.winner) {
                         winnerDisplayElement.textContent = `Winner: ${data.winner}`;
+
+                        // Hide the play move button
+                        const playMoveButton = document.querySelector("button[onclick='playMove()']");
+                        if (playMoveButton) {
+                            playMoveButton.style.display = "none";
+                        }
                     } else {
                         winnerDisplayElement.textContent = ""; // Clear the winner display if the game is not over
+
+                        // Show the play move button
+                        const playMoveButton = document.querySelector("button[onclick='playMove()']");
+                        if (playMoveButton) {
+                            playMoveButton.style.display = "inline-block";
+                        }
                     }
+
+                    // Call checkCollapseOptions to handle collapse options
+                    checkCollapseOptions();
                 })
                 .catch(error => {
                     console.error("Error fetching game state:", error);
@@ -183,6 +210,12 @@
                 console.log("Game restarted successfully:", data);
                 fetchAndUpdateGameState(); // Refresh the game state after restarting
                 checkCollapseOptions();
+
+                // Remove the collapse buttons
+                const collapseContainer = document.getElementById("collapseContainer");
+                if (collapseContainer) {
+                    collapseContainer.innerHTML = "";
+                }
             })
             .catch(error => {
                 console.error("Error restarting game:", error);
