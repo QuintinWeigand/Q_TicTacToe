@@ -6,6 +6,7 @@
     <link rel="icon" href="qtic.ico" type="image/x-icon">
 </head>
 <body>
+    <div style="position: absolute; top: 10px; left: 10px; font-size: 18px; font-weight: bold;" id="currentPlayer">Current Player: </div>
     <h1>Quantum Tic Tac Toe</h1>
 
     <div class="tic-tac-toe-board" id="ticTacToeBoard">
@@ -123,6 +124,10 @@
                 .then(data => {
                     console.log("Game state:", data); // Log the game state to the console
                     renderQuantumBoard(data.board.quantum_board_state, data.board.classical_board_state); // Update the board visualization
+
+                    // Update the current player text
+                    const currentPlayerElement = document.getElementById("currentPlayer");
+                    currentPlayerElement.textContent = `Current Player: ${data.current_player}`;
                 })
                 .catch(error => {
                     console.error("Error fetching game state:", error);
