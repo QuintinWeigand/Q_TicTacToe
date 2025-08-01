@@ -32,6 +32,19 @@ def main():
     keys = list(counter.keys())
     values = list(counter.values())
 
+    total_games = sum(values)
+
+    numerator = 0
+
+    for key, value in counter.items():
+        part = key * value
+        numerator += part
+
+    final_value = numerator / total_games
+
+    print(counter)
+    print(final_value)
+
     bars = plt.bar(keys, values)
     plt.xlabel('Total Moves')
     plt.ylabel('Number of Games')
@@ -40,7 +53,7 @@ def main():
 
     plt.bar_label(bars, padding=3)
     
-    plt.savefig("plots/num_steps_10M.png")
+    # plt.savefig("plots/num_steps_10M.png")
 
 
 if __name__ == "__main__":

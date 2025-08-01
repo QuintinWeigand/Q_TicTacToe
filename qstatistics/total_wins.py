@@ -28,14 +28,14 @@ def main():
     bars = plt.bar(labels, wins, color=['blue', 'orange'])
     plt.xlabel('Player')
     plt.ylabel('Number of Wins')
-    plt.title('Total Wins by Player - 1M')
+    plt.title('Total Wins by Player - 10M')
     plt.tight_layout()
     plt.bar_label(bars, padding=3)
     
-    plt.savefig("plots/total_wins_1M.png")
+    plt.savefig("plots/total_wins_10M.png")
     
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:
         db = client["TicTacToe"]
-        collection = db["QGameResults_1M"]
+        collection = db["QGameResults_10M"]
         main()
