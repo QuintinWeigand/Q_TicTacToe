@@ -7,6 +7,7 @@
 </head>
 <body>
     <div style="position: absolute; top: 10px; left: 10px; font-size: 18px; font-weight: bold;" id="currentPlayer">Current Player: </div>
+    <div style="position: absolute; top: 40px; left: 10px; font-size: 18px; font-weight: bold; color: red;" id="winnerDisplay"></div>
     <h1>Quantum Tic Tac Toe</h1>
 
     <div class="tic-tac-toe-board" id="ticTacToeBoard">
@@ -114,7 +115,6 @@
 
         function fetchAndUpdateGameState() {
             checkCollapseOptions();
-            
             fetch("/api/update-game-state", { method: "POST" })
                 .then(response => response.json())
                 .then(() => {
@@ -128,6 +128,14 @@
                     // Update the current player text
                     const currentPlayerElement = document.getElementById("currentPlayer");
                     currentPlayerElement.textContent = `Current Player: ${data.current_player}`;
+
+                    // Display the winner if the game is over
+                    const winnerDisplayElement = document.getElementById("winnerDisplay");
+                    if (data.game_over && data.winner) {
+                        winnerDisplayElement.textContent = `Winner: ${data.winner}`;
+                    } else {
+                        winnerDisplayElement.textContent = ""; // Clear the winner display if the game is not over
+                    }
                 })
                 .catch(error => {
                     console.error("Error fetching game state:", error);
@@ -193,7 +201,7 @@
         }
 
         function handleCollapse(collapseOptions) {
-            console.log("Handling collapse options:", collapseOptions);
+            // console.log("Handling collapse options:", collapseOptions);
 
             // Get the container to render buttons (create one if it doesn't exist)
             let collapseContainer = document.getElementById("collapseContainer");
@@ -257,9 +265,7 @@
                         console.log("Collapse options available:", data.options);
                         handleCollapse(data.options);
                         break; // Exit the loop if collapse options are found
-                    } else {
-                        console.log("No collapse options yet. Retrying...");
-                    }
+                    } 
                 } catch (error) {
                     console.error("Error checking collapse options:", error);
                 }
