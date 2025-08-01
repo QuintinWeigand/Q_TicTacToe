@@ -55,6 +55,32 @@ def restart_game():
     game.reset()  # Call the reset method in your game logic
     return jsonify({"success": True, "message": "Game restarted successfully!"})
 
+@app.route('/api/get-collapse-options', methods=['GET'])
+def get_collapse_options():
+    if game.collapse_options:
+        return jsonify({"success": True, "options": game.collapse_options})
+    return jsonify({"success": True, "options": None})
+
+@app.route('/api/submit-collapse-choice', methods=['POST'])
+def submit_collapse_choice():
+    data = request.get_json()
+    if not data or "choice" not in data:
+        return jsonify({"success": False, "message": "Invalid data."}), 400
+
+    choice = data["choice"]
+    try:
+        choice = int(choice)
+        if 0 <= choice < len(game.collapse_options):
+            chosen_pos, chosen_subscript, chosen_creation = game.collapse_options[choice]
+            game.resolve_collapse([], chosen_pos, chosen_subscript, chosen_creation)
+            game.game_paused = False  # Resume the game
+            emit_game_state()  # Push updated game state to clients
+            return jsonify({"success": True, "message": "Collapse choice processed successfully!"})
+        else:
+            return jsonify({"success": False, "message": "Choice out of range."}), 400
+    except ValueError:
+        return jsonify({"success": False, "message": "Invalid choice format."}), 400
+
 if __name__ == "__main__":
     socketio.run(app, port=5000)
 

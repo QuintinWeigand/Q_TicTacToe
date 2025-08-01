@@ -7,6 +7,7 @@ const app = express();
 
 // Storing the game state
 let gameState = null;
+let collapse_options = null
 
 app.use(express.static(path.join(__dirname, '../')));
 
@@ -53,3 +54,4 @@ function fetchGameState() {
         console.error("Error fetching data:", err);
     });
 }
+

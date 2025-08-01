@@ -14,10 +14,11 @@ class QuantumGame:
         # Persistent quantum relationship tracking
         self.pairs = defaultdict(set)          # pos -> set of (other_pos, subscript) that are paired
         self.shares_square = defaultdict(set)  # pos -> set of (other_pos, subscript) that share the square
+        self.collapse_options = []              # Store collapse options for user input
+        self.game_paused = False                # Indicates if the game is paused for user input
 
     def handle_collapse(self, cycle_info) -> bool:
-        # print("\nCycle detected! Quantum collapse needed.")
-        # print("\nAvailable particles to observe:")
+        print("handle_collapse called")  # Debugging: Indicate method entry
         position_particles = {}
         cycle_positions = set(pos for pos, _, _ in cycle_info)
         for pos in range(1, 10):
@@ -32,25 +33,18 @@ class QuantumGame:
                     position_particles[pos].append((subscript, creation, player))
         options = []
         for pos in sorted(position_particles.keys()):
-            # print(f"\nPosition {pos}:")
             for subscript, creation, player in sorted(position_particles[pos]):
-                option_id = len(options)
                 options.append((pos, subscript, creation))
-                # print(f"{option_id}: Player {player}'s {subscript}[{creation}]")
-        # The player who did NOT close the cycle chooses the collapse
-        chooser_player = 3 - self.current_player
+
         if not options:
-            # print("No available particles to observe.")
-            return False
-        
-        if len(options) == 1:
-            choice = 0
-        else:
-            choice = random.randint(0, 1)
-        
-        chosen_pos, chosen_subscript, chosen_creation = options[choice]
-        # print(f"[BOT] Randomly selected particle {choice}: Position {chosen_pos}, Subscript {chosen_subscript}, Creation {chosen_creation} for collapse.")
-        return self.resolve_collapse(cycle_info, chosen_pos, chosen_subscript, chosen_creation)
+            print("No particles to collapse")  # Debugging: No options available
+            return False  # No particles to collapse
+
+        # Store options and pause the game
+        self.collapse_options = options
+        self.game_paused = True  # Indicate the game is paused for user input
+        print(f"Game paused. Collapse options: {self.collapse_options}")  # Debugging: Show options
+        return False  # Indicate that the game is waiting for user input
 
     def handle_quantum_chain_reaction(self, pos, sub, exists, nonexist, to_process, player):
         if pos in exists or pos in nonexist:
@@ -241,4 +235,6 @@ class QuantumGame:
         self.winner = None
         self.pairs = defaultdict(set)
         self.shares_square = defaultdict(set)
+        self.collapse_options = []
+        self.game_paused = False
 
