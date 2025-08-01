@@ -167,6 +167,7 @@
             .then(data => {
                 console.log("Game restarted successfully:", data);
                 fetchAndUpdateGameState(); // Refresh the game state after restarting
+                checkCollapseOptions();
             })
             .catch(error => {
                 console.error("Error restarting game:", error);
@@ -184,11 +185,37 @@
                 });
         }
 
+        function handleCollapse(collapseOptions) {
+            console.log("Handling collapse options:", collapseOptions);
+            // TODO: Implement logic to process and display collapse options
+        }
+
+        async function checkCollapseOptions() {
+            while (true) {
+                try {
+                    const response = await fetch("http://localhost:5000/api/get-collapse-options");
+                    const data = await response.json();
+                    if (data.options) {
+                        console.log("Collapse options available:", data.options);
+                        handleCollapse(data.options);
+                        break; // Exit the loop if collapse options are found
+                    } else {
+                        console.log("No collapse options yet. Retrying...");
+                    }
+                } catch (error) {
+                    console.error("Error checking collapse options:", error);
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+            }
+        }
+
         // Call the function initially to load the game state
         fetchAndUpdateGameState();
 
         // Call the function to test fetchCollapseOptions
         fetchCollapseOptions();
+
+        checkCollapseOptions();
     </script>
 </body>
 </html>
