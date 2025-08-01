@@ -64,6 +64,7 @@ def get_collapse_options():
 @app.route('/api/submit-collapse-choice', methods=['POST'])
 def submit_collapse_choice():
     data = request.get_json()
+    print(f"Received data for collapse choice: {data}")  # Debug print statement
     if not data or "choice" not in data:
         return jsonify({"success": False, "message": "Invalid data."}), 400
 
@@ -73,6 +74,7 @@ def submit_collapse_choice():
         if 0 <= choice < len(game.collapse_options):
             chosen_pos, chosen_subscript, chosen_creation = game.collapse_options[choice]
             game.resolve_collapse([], chosen_pos, chosen_subscript, chosen_creation)
+            game.collapse_options = []  # Clear collapse options
             game.game_paused = False  # Resume the game
             emit_game_state()  # Push updated game state to clients
             return jsonify({"success": True, "message": "Collapse choice processed successfully!"})

@@ -112,6 +112,8 @@
         }
 
         function fetchAndUpdateGameState() {
+            checkCollapseOptions();
+            
             fetch("/api/update-game-state", { method: "POST" })
                 .then(response => response.json())
                 .then(() => {
@@ -187,7 +189,55 @@
 
         function handleCollapse(collapseOptions) {
             console.log("Handling collapse options:", collapseOptions);
-            // TODO: Implement logic to process and display collapse options
+
+            // Get the container to render buttons (create one if it doesn't exist)
+            let collapseContainer = document.getElementById("collapseContainer");
+            if (!collapseContainer) {
+                collapseContainer = document.createElement("div");
+                collapseContainer.id = "collapseContainer";
+                collapseContainer.style.marginTop = "20px";
+                document.body.appendChild(collapseContainer);
+            }
+
+            // Clear any existing buttons
+            collapseContainer.innerHTML = "";
+
+            // Render a button for each collapse option
+            collapseOptions.forEach((option, index) => {
+                const [boardPosition, subscript] = option; // Destructure the array
+
+                const button = document.createElement("button");
+                button.textContent = `Position: ${boardPosition}, Subscript: ${subscript}`;
+                button.style.margin = "5px";
+
+                // Add an event listener to handle button clicks
+                button.addEventListener("click", () => {
+                    console.log(`Button clicked for index: ${index}`);
+
+                    // Send the index to the Flask route
+                    fetch("http://localhost:5000/api/submit-collapse-choice", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ choice: index })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log("Collapse choice processed successfully:", data.message);
+                            fetchAndUpdateGameState(); // Refresh the game state after collapse
+                        } else {
+                            console.error("Error processing collapse choice:", data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error submitting collapse choice:", error);
+                    });
+                });
+
+                collapseContainer.appendChild(button);
+            });
         }
 
         async function checkCollapseOptions() {
@@ -214,8 +264,6 @@
 
         // Call the function to test fetchCollapseOptions
         fetchCollapseOptions();
-
-        checkCollapseOptions();
     </script>
 </body>
 </html>

@@ -96,6 +96,7 @@ class QuantumGame:
 
     def resolve_collapse(self, cycle_info, chosen_pos, chosen_subscript, chosen_creation):
         # This is the final, correct implementation of the collapse logic.
+        print("Cool stuff: ", chosen_pos, chosen_subscript, chosen_creation) # Debug
 
         # 1. Data setup: Get all particles on the board for easy lookup.
         all_particles = []
