@@ -227,6 +227,9 @@
                         if (data.success) {
                             console.log("Collapse choice processed successfully:", data.message);
                             fetchAndUpdateGameState(); // Refresh the game state after collapse
+
+                            // Remove the buttons after successful collapse
+                            collapseContainer.innerHTML = "";
                         } else {
                             console.error("Error processing collapse choice:", data.message);
                         }
