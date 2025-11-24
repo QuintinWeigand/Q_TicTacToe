@@ -51,22 +51,37 @@ def main():
     move_labels = [f"Pos {move[0]}" if isinstance(move, tuple) else f"Pos {
         move}" for move in sorted_moves]
 
-    # Create bar plot
+    # Create bar plot with color intensity based on magnitude
     plt.figure(figsize=(12, 6))
-    colors = ['green' if x > 0 else 'red' if x <
-              0 else 'gray' for x in sorted_results]
-    bars = plt.bar(move_labels, sorted_results, color=colors, alpha=0.7)
 
-    plt.xlabel('Starting Move Position', fontsize=12)
-    plt.ylabel('Wins - Losses (Player 1)', fontsize=12)
-    plt.title('Player 1 Win-Loss Difference by Starting Move', fontsize=14)
-    plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+    # Normalize values for color intensity
+    max_abs_val = max(abs(min(sorted_results)), abs(max(sorted_results)))
+    normalized_vals = [val/max_abs_val for val in sorted_results]
+
+    # Create color map: green for positive, red for negative, intensity based on magnitude
+    colors = []
+    for val, norm_val in zip(sorted_results, normalized_vals):
+        if val > 0:
+            # Green with intensity
+            colors.append((0, 1-norm_val*0.7, 0, 0.7+norm_val*0.3))
+        elif val < 0:
+            # Red with intensity
+            colors.append((1-norm_val*0.7, 0, 0, 0.7+norm_val*0.3))
+        else:
+            colors.append((0.5, 0.5, 0.5, 0.7))  # Gray for zero
+
+    bars = plt.bar(move_labels, sorted_results, color=colors,
+                   edgecolor='black', linewidth=1)
+
+    plt.xlabel('Starting Move Position', fontsize=16)
+    plt.ylabel('Wins - Losses (Player 1)', fontsize=16)
+    plt.axhline(y=0, color='black', linestyle='-', alpha=0.5)
     plt.grid(True, alpha=0.3)
 
-    for bar, value in zip(bars, sorted_results):
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height + (0.1 if height >= 0 else -0.3),
-                 f'{value}', ha='center', va='bottom' if height >= 0 else 'top')
+    # Add a text annotation explaining the color coding
+    plt.text(0.02, 0.98, 'Color intensity = magnitude of win-loss difference',
+             transform=plt.gca().transAxes, fontsize=10, verticalalignment='top',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
     plt.tight_layout()
     plt.savefig('plots/first_move_win_loss_diff.png',

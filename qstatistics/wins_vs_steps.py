@@ -54,14 +54,12 @@ def main():
         except Exception as e:
             print(f"Error processing {collection_name}: {e}")
 
-    plt.xlabel('Number of Steps (Total Moves)', fontsize=12)
-    plt.ylabel('Number of Wins', fontsize=12)
-    plt.title(
-        'Number of Wins as a Function of Steps for Different N Values', fontsize=14)
-    plt.legend(fontsize=10)
+    plt.xlabel('Number of Steps (Total Moves)', fontsize=18)
+    plt.ylabel('Number of Wins', fontsize=18)
+    plt.legend(fontsize=16)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-
+    plt.ticklabel_format(style='scientific', axis='both', scilimits=(0, 0))
     plt.savefig('plots/wins_vs_steps_multiple_N.png',
                 dpi=300, bbox_inches='tight')
     # plt.show()
