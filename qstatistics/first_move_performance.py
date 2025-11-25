@@ -70,8 +70,8 @@ def main():
         else:
             colors.append((0.5, 0.5, 0.5, 0.7))  # Gray for zero
 
-    bars = plt.bar(move_labels, sorted_results, color=colors,
-                   edgecolor='black', linewidth=1)
+    _ = plt.bar(move_labels, sorted_results, color=colors,
+                edgecolor='black', linewidth=1)
 
     plt.xlabel('Starting Move Position', fontsize=16)
     plt.ylabel('Wins - Losses (Player 1)', fontsize=16)
