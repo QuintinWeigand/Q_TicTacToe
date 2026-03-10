@@ -28,13 +28,15 @@ def main():
     moves = list(sorted_move_dict.keys())
     counts = list(sorted_move_dict.values())
 
-    bars = plt.bar(moves, counts, color="maroon")
-    plt.xlabel("Number of Moves")
-    plt.ylabel("Number of Games")
-    plt.title("Number of Moves per Game - 10M")
-    plt.bar_label(bars, padding=3)
+    # Set global font size for better visibility
+    plt.rcParams.update({"font.size": 20})
     
-    plt.savefig("plots/num_moves_10M")
+    bars = plt.bar(moves, counts, color="maroon")
+    plt.xlabel("Number of Moves", fontsize=20)
+    plt.ylabel("Number of Games", fontsize=20)
+    plt.bar_label(bars, padding=3, fontsize=18)
+    
+    plt.savefig("plots/num_moves_10M.png", dpi=300, bbox_inches='tight')
     
 
 if __name__ == "__main__":

@@ -22,17 +22,19 @@ def main():
         else:
             player2_wins += 1
 
+    # Set global font size for better visibility
+    plt.rcParams.update({"font.size": 20})
+    
     # Bar plot for wins
     labels = ['Player 1', 'Player 2']
     wins = [player1_wins, player2_wins]
     bars = plt.bar(labels, wins, color=['blue', 'orange'])
-    plt.xlabel('Player')
-    plt.ylabel('Number of Wins')
-    plt.title('Total Wins by Player - 10M')
+    plt.xlabel('Player', fontsize=20)
+    plt.ylabel('Number of Wins', fontsize=20)
     plt.tight_layout()
-    plt.bar_label(bars, padding=3)
+    plt.bar_label(bars, padding=3, fontsize=18)
     
-    plt.savefig("plots/total_wins_10M.png")
+    plt.savefig("plots/total_wins_10M.png", dpi=300, bbox_inches='tight')
     
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:

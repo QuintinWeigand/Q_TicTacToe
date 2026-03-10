@@ -45,15 +45,17 @@ def main():
     print(counter)
     print(final_value)
 
+    # Set global font size for better visibility
+    plt.rcParams.update({"font.size": 20})
+    
     bars = plt.bar(keys, values)
-    plt.xlabel('Total Moves')
-    plt.ylabel('Number of Games')
-    plt.title('Distribution of Total Moves in Games - 10M')
+    plt.xlabel('Total Moves', fontsize=20)
+    plt.ylabel('Number of Games', fontsize=20)
     plt.tight_layout()
 
-    plt.bar_label(bars, padding=3)
+    plt.bar_label(bars, padding=3, fontsize=18)
     
-    # plt.savefig("plots/num_steps_10M.png")
+    plt.savefig("plots/num_steps_10M.png", dpi=300, bbox_inches='tight')
 
 
 if __name__ == "__main__":
