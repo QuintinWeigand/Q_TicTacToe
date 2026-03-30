@@ -34,7 +34,7 @@ def get_wins_by_steps(collection, limit=None):
 
 def main():
     N_values = [1e5, 1e6, 1e7]
-    collection_name = "QGameResults_10M"
+    collection_name = "QGameResults_1M"
 
     # Set global font size for better visibility
     plt.rcParams.update({"font.size": 20})

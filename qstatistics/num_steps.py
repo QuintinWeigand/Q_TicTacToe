@@ -61,5 +61,5 @@ def main():
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:
         database = client["TicTacToe"]
-        collection = database["QGameResults_10M"]
+        collection = database["QGameResults_1M"]
         main()

@@ -39,5 +39,5 @@ def main():
 if __name__ == "__main__":
     with MongoClient("mongodb://localhost:27017") as client:
         db = client["TicTacToe"]
-        collection = db["QGameResults_10M"]
+        collection = db["QGameResults_1M"]
         main()

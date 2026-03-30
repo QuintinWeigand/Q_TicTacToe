@@ -182,7 +182,7 @@ def create_heatmap(heatmap_data):
 
 
 def main():
-    collection = db["QGameResults_10M"]  # Change as needed
+    collection = db["QGameResults_1M"]  # Change as needed
 
     # Generate heatmap data
     heatmap_data = analyze_first_move_combinations(collection)
